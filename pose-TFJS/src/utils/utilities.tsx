@@ -1,11 +1,9 @@
-interface Keypoint {
-    x: number;
-    y: number;
+interface KP {
     position: {y: number, x: number}
     score: number;
 }
 
-export function drawKeypoints(keypoints: Keypoint[], minConfidence: number, ctx: CanvasRenderingContext2D, scale = 1) {
+export function drawKeypoints(keypoints: KP[], minConfidence: number, ctx: CanvasRenderingContext2D, scale = 1) {
     const color = "aqua"
     const rad = 3
 
@@ -15,9 +13,9 @@ export function drawKeypoints(keypoints: Keypoint[], minConfidence: number, ctx:
         if (keypoint.score < minConfidence) {
             continue;
         }
-
         const { y, x } = keypoint.position;
         drawPoint(ctx, x * scale, y * scale, rad, color);
+        // console.log('drew kp at %d %d' , x, y)
     }
 }
 
