@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import * as tf from '@tensorflow/tfjs';
+import { ChakraProvider } from '@chakra-ui/react'
+
 
 tf.setBackend('webgl').then(() => {
   console.log("webgl backend initialized");
@@ -12,6 +14,8 @@ tf.setBackend('webgl').then(() => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
   </React.StrictMode>,
 )

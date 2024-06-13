@@ -13,6 +13,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.mirrored-container {
+  transform: scaleX(-1);
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -34,6 +38,10 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+/* video {
+  transform: scaleX(-1);
+} */
 
 button {
   border-radius: 8px;

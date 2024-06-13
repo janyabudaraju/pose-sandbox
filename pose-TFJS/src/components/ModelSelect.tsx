@@ -1,6 +1,6 @@
-import Dropdown from 'react-bootstrap/Dropdown';
-import DropdownButton from 'react-bootstrap/DropdownButton';
+
 import { useState } from "react";
+import { Radio, RadioGroup, Stack, Heading } from "@chakra-ui/react";
 
 function ModelSelect(){
     const models = [
@@ -8,18 +8,21 @@ function ModelSelect(){
         { id: 'blazepose', name: 'BlazePose' },
         { id: 'efficientpose', name: 'EfficientPose' }
     ];
-
     const [selectedModel, setSelectedModel] = useState(models[0].name);
 
     return(
-        <DropdownButton id="model-select" title={selectedModel}>
-            <Dropdown.ItemText>Model Selection</Dropdown.ItemText>
-            {models.map(model => (
-                <Dropdown.Item key={model.id} onClick={() => setSelectedModel(model.name)}>
-                    {model.name}
-                </Dropdown.Item>
-            ))}
-        </DropdownButton>
+        <div>
+            <Heading size="md" mb="2">
+                model selection
+            </Heading>
+            <RadioGroup onChange={setSelectedModel} value={selectedModel} size="lg">
+                <Stack>
+                    {
+                        models.map(model => (<Radio value={model.name}> {model.name} </Radio>))
+                    }
+                </Stack>
+            </RadioGroup>
+        </div>
     )
 }
 

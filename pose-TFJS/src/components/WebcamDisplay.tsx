@@ -57,7 +57,7 @@ function WebcamDisplay(){
       }, [runPosenet]);
 
       return (
-        <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
+        <div style={{ position: 'relative', width: '1280px', height: '720px' }} className="mirrored-container">
           {/* <Webcam
           ref={camRef}
           style={{
@@ -92,8 +92,8 @@ function WebcamDisplay(){
               position: 'absolute',
               width: '100%',
               height: '100%',
-              top: 0,
-              left: 0,
+              // top: 0,
+              // left: 0,
             }} 
             videoConstraints={{ width: 1280, height: 720, facingMode: "user" }}
           />
@@ -103,8 +103,8 @@ function WebcamDisplay(){
               position: 'absolute',
               width: '100%',
               height: '100%',
-              top: 0,
-              left: 0,
+              // top: 0,
+              // left: 0,
               zIndex: 10,
               border: '4px solid black'
             }}
