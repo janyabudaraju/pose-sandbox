@@ -1,24 +1,28 @@
 
-import { useState } from "react";
 import { Radio, RadioGroup, Stack, Heading } from "@chakra-ui/react";
+import { PoseModel, Pose2D, poseNetModel } from "../utils/ModelDefinitions";
 
-function ModelSelect(){
-    const models = [
-        { id: 'posenet', name: 'PoseNet' },
-        { id: 'blazepose', name: 'BlazePose' },
-        { id: 'efficientpose', name: 'EfficientPose' }
-    ];
-    const [selectedModel, setSelectedModel] = useState(models[0].name);
+const modelOptions: (PoseModel<Pose2D>)[] = [ poseNetModel()];
+
+type Props = {
+    onModelChange: (modelId: string) => void;
+};
+
+function ModelSelect({onModelChange}: Props){
+    const handleModelChange = (value: string) => {
+        onModelChange(value);
+        console.log(value);
+    };
 
     return(
         <div>
             <Heading size="md" mb="2">
                 model selection
             </Heading>
-            <RadioGroup onChange={setSelectedModel} value={selectedModel} size="lg">
+            <RadioGroup onChange={handleModelChange} defaultValue={modelOptions[0].id} size="lg">
                 <Stack>
                     {
-                        models.map(model => (<Radio value={model.name}> {model.name} </Radio>))
+                        modelOptions.map(model => (<Radio value={model.name}> {model.name} </Radio>))
                     }
                 </Stack>
             </RadioGroup>

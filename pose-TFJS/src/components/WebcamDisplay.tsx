@@ -87,7 +87,7 @@ function WebcamDisplay(){
                 width: '100%',
                 height: '100%',
               }} 
-              videoConstraints={{ width: 1280, height: 720, facingMode: "user" }}
+              videoConstraints={{ width: 1280, height: 720, facingMode: "user", frameRate: { ideal: 120, max: 120 } }}
             />
             <canvas 
               ref={canvasRef} 
