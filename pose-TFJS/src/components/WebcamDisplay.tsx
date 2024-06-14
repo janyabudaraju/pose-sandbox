@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import Webcam from "react-webcam";
 import * as posenet from "@tensorflow-models/posenet";
-import { drawKeypoints } from "../utils/utilities";
+import { drawKeypoints2D } from "../utils/utilities";
 import { Box } from "@chakra-ui/react";
 
 // TODO: add prop for model
@@ -38,7 +38,7 @@ function WebcamDisplay(){
             const ctx = canvas.getContext("2d");
             if(ctx) {
               ctx.clearRect(0, 0, vidW, vidH);
-              drawKeypoints(pose["keypoints"], 0.1, ctx);
+              drawKeypoints2D(pose["keypoints"], 0.1, ctx);
             }
           }
         }

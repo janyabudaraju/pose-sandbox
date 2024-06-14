@@ -1,19 +1,20 @@
 // import * as posenet from '@tensorflow-models/posenet';
 
-import { KP } from "./ModelDefinitions";
+import { KP2D } from "./ModelDefinitions";
 
-export function drawKeypoints(keypoints: KP[], minConfidence: number, ctx: CanvasRenderingContext2D, scale = 1) {
+export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, ctx: CanvasRenderingContext2D, scale = 1) {
     const color = "aqua"
     const rad = 3
 
     for (let i = 0; i < keypoints.length; i++) {
         const keypoint = keypoints[i];
 
-        if (keypoint.score < minConfidence) {
+        if (keypoint.score && keypoint.score < minConfidence) {
             continue;
         }
-        const { y, x } = keypoint.position;
-        drawPoint(ctx, x * scale, y * scale, rad, color);
+        if(keypoint.x && keypoint.y) {
+            drawPoint(ctx, keypoint.x * scale, keypoint.x * scale, rad, color);
+        }
         // console.log('drew kp at %d %d' , x, y)
     }
 }
