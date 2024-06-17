@@ -85,7 +85,12 @@ export function blazeNetModel(): PoseModel<Pose3D> {
     const id = 'blazepose';
     const name = 'BlazePose';
     const load = async (): Promise<void> => {
-        model = await poseDetection.createDetector(poseDetection.SupportedModels.BlazePose);
+        const detectorConfig = {
+            runtime: 'tfjs',
+            enableSmoothing: true,
+            modelType: 'full'
+        };
+        model = await poseDetection.createDetector(poseDetection.SupportedModels.BlazePose, detectorConfig);
     };
 
     const runInference = async (video: HTMLVideoElement): Promise<Pose3D[]> => {

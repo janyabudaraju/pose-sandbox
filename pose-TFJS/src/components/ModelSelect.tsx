@@ -21,7 +21,7 @@ function ModelSelect({onModelChange}: Props){
             <RadioGroup onChange={handleModelChange} defaultValue={modelOptions[0].id} size="lg">
                 <Stack>
                     {
-                        modelOptions.map(model => (<Radio value={model.name}> {model.name} </Radio>))
+                        modelOptions.map(model => (<Radio key={model.id} value={model.id}> {model.name} </Radio>))
                     }
                 </Stack>
             </RadioGroup>

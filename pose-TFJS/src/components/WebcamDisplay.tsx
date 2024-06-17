@@ -23,8 +23,11 @@ function WebcamDisplay({model}: Props){
       if (camRef.current?.video?.readyState === 4) {
           const video = camRef.current.video;
           const canvas = canvasRef.current;
-          if (canvas && video) {
-              const poseData = await model.runInference(video); // Using the model from props
+          video.width = video.videoWidth;
+          video.height = video.videoHeight;
+
+          if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {      
+              const poseData = await model.runInference(video);
               const ctx = canvas.getContext("2d");
               if (ctx) {
                   ctx.clearRect(0, 0, video.videoWidth, video.videoHeight);
