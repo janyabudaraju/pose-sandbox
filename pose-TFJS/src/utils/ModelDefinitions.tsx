@@ -121,4 +121,17 @@ export function blazeNetModel(): PoseModel<Pose3D> {
     return { id, name, load, runInference };
 }
 
-export const modelOptions: (PoseModel<BasePose>)[] = [ poseNetModel(), moveNetModel(), blazeNetModel()];
+export function noModel(): PoseModel<BasePose> {
+    // const model: PoseDetector | null = null;
+    const id = 'none';
+    const name = 'None';
+
+    const load = async(): Promise<void> => { };
+    const runInference: (video: HTMLVideoElement) => Promise<BasePose[]> = (video) => {   
+        console.log(video.width); // placeholder to allow ignoring video param
+        return Promise.resolve([]);
+    };
+    return { id, name, load, runInference };
+}
+
+export const modelOptions: (PoseModel<BasePose>)[] = [ poseNetModel(), moveNetModel(), blazeNetModel(), noModel()];

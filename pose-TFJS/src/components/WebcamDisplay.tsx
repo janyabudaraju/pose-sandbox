@@ -20,7 +20,7 @@ function WebcamDisplay({model}: Props){
 
     // function to run inference on a video frame and draw the corresponding keypoints.
     const estimatePose = useCallback(async () => {
-      if (camRef.current?.video?.readyState === 4) {
+      if (camRef.current?.video?.readyState === 4 && model.id != 'none') {
           const video = camRef.current.video;
           const canvas = canvasRef.current;
           video.width = video.videoWidth;
@@ -35,7 +35,6 @@ function WebcamDisplay({model}: Props){
               }
           }
       }
-
       frameCount.current += 1;
       requestRef.current = requestAnimationFrame(estimatePose);
     }, [model]);
