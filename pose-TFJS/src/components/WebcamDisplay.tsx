@@ -3,6 +3,7 @@ import Webcam from "react-webcam";
 // import { drawKeypoints2D } from "../utils/utilities";
 import { Box } from "@chakra-ui/react";
 import { PoseModel, BasePose } from "../utils/ModelDefinitions";
+import { drawKeypoints2D } from "../utils/utilities";
 
 type Props = {
   model: PoseModel<BasePose>;
@@ -25,13 +26,18 @@ function WebcamDisplay({model}: Props){
           const canvas = canvasRef.current;
           video.width = video.videoWidth;
           video.height = video.videoHeight;
-
+          
           if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {      
               const poseData = await model.runInference(video);
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
               const ctx = canvas.getContext("2d");
               if (ctx) {
                   ctx.clearRect(0, 0, video.videoWidth, video.videoHeight);
-                  console.log(poseData);
+                  poseData.forEach(pose => { 
+                    drawKeypoints2D(pose.keypoints, 0.1, ctx); 
+                  });
+                  // console.log(poseData);
               }
           }
       }

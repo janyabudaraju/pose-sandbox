@@ -13,9 +13,8 @@ export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, ctx: C
             continue;
         }
         if(keypoint.x && keypoint.y) {
-            drawPoint(ctx, keypoint.x * scale, keypoint.x * scale, rad, color);
+            drawPoint(ctx, keypoint.x * scale, keypoint.y * scale, rad, color);
         }
-        // console.log('drew kp at %d %d' , x, y)
     }
 }
 
