@@ -11,56 +11,72 @@ type Props = {
 
 function WebcamDisplay({model}: Props){
 
+    const [isModelChanged, setIsModelChanged] = useState(true);
     const camRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef =  useRef<number | undefined>(undefined);
-
+    const curModelRef = useRef<PoseModel<BasePose> | null>(null);
     const [fps, setFps] = useState(0);
     const frameCount = useRef(0);
     const prevTime = useRef(Date.now());
 
     // function to run inference on a video frame and draw the corresponding keypoints.
     const estimatePose = useCallback(async () => {
-      if (camRef.current?.video?.readyState === 4 && model.id != 'none') {
-          const video = camRef.current.video;
-          const canvas = canvasRef.current;
+      if (camRef.current?.video?.readyState === 4) {
+        const video = camRef.current.video;
+        const canvas = canvasRef.current;
+        if(video.videoWidth != video.width || video.videoHeight != video.height) {
           video.width = video.videoWidth;
           video.height = video.videoHeight;
-          
-          if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {      
-              const poseData = await model.runInference(video);
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                  ctx.clearRect(0, 0, video.videoWidth, video.videoHeight);
-                  poseData.forEach(pose => { 
-                    drawKeypoints2D(pose.keypoints, 0.1, ctx); 
-                  });
-                  // console.log(poseData);
-              }
+        }
+        if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {     
+          if (canvas.width != video.width || canvas.height != video.height) {
+            canvas.width = video.width;
+            canvas.height = video.height;
           }
+          const poseData = await model.runInference(video);
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(0, 0, video.width, video.height);
+            poseData.forEach(pose => { 
+              drawKeypoints2D(pose.keypoints, 0.1, ctx); 
+            });
+          }
+        }
       }
       frameCount.current += 1;
       requestRef.current = requestAnimationFrame(estimatePose);
     }, [model]);
 
       // function to loop the runInference function for each frame of the video.
-      const runPosenet = useCallback(async () => {
+      const runModel = useCallback(async () => {
+        if (curModelRef.current) {
+          curModelRef.current.dispose();
+        }
+
         await model.load();
-        console.log("model loaded.");
+        curModelRef.current = model;
+        console.log("model loaded. ", model.name);
+
         requestRef.current = requestAnimationFrame(() => estimatePose());
       }, [model, estimatePose]);
 
+      useEffect(() => {
+        setIsModelChanged(true);
+      }, [model]);
+      
       // hook to start the loop and clean up as necessary.
       useEffect(() => {
-        runPosenet();
-        return () => {
+        if (isModelChanged) {
+          setIsModelChanged(false);
+    
           if (requestRef.current) {
-            cancelAnimationFrame(requestRef.current);
+            window.cancelAnimationFrame(requestRef.current);
           }
-        };
-      }, [runPosenet]);
+          runModel();
+        }
+      }, [isModelChanged, runModel]);
 
       useEffect(() => {
         const calculateFps = () => {
@@ -86,6 +102,7 @@ function WebcamDisplay({model}: Props){
                 width: '100%',
                 height: '100%',
               }} 
+              // videoConstraints={{ width: 1280, height: 720, facingMode: "user"}}
               videoConstraints={{ width: 1280, height: 720, facingMode: "user", frameRate: { ideal: 120, max: 120 } }}
             />
             <canvas 

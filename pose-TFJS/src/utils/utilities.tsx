@@ -6,6 +6,8 @@ export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, ctx: C
     const color = "aqua"
     const rad = 3
 
+    // console.log(keypoints);
+
     for (let i = 0; i < keypoints.length; i++) {
         const keypoint = keypoints[i];
 
@@ -15,6 +17,7 @@ export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, ctx: C
         if(keypoint.x && keypoint.y) {
             drawPoint(ctx, keypoint.x * scale, keypoint.y * scale, rad, color);
         }
+        // drawPoint(ctx, 606, 286, 5, 'red');
     }
 }
 
@@ -23,6 +26,8 @@ export function drawPoint(ctx: CanvasRenderingContext2D, x: number, y: number, r
     ctx.arc(x, y, r, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
+    // console.log('drew kp at %d %d' , x, y);
+
 }  
 
 export function drawSegment([ay, ax]: [number, number], [by, bx]: [number, number], color: string, scale: number, ctx: CanvasRenderingContext2D) {

@@ -24,6 +24,7 @@ export interface PoseModel <T> {
     name: string;
     load: () => Promise<void>;
     runInference: (video: HTMLVideoElement) => Promise<T[]>;
+    dispose: () => void;
 }
 
 export function poseNetModel(): PoseModel<BasePose> {
@@ -35,6 +36,8 @@ export function poseNetModel(): PoseModel<BasePose> {
     };
 
     const runInference = async (video: HTMLVideoElement): Promise<BasePose[]> => {
+        // console.log('posenet inference');
+
         if (!model) {
             throw new Error('posenet not loaded.');
         }
@@ -50,7 +53,13 @@ export function poseNetModel(): PoseModel<BasePose> {
         }));
         return inference;
     };
-    return { id, name, load, runInference };
+    const dispose = (): void => {
+        if (model) {
+            model.dispose();
+            model = null;
+        }
+    };
+    return { id, name, load, runInference, dispose };
 }
 
 export function moveNetModel(): PoseModel<BasePose> {
@@ -65,6 +74,7 @@ export function moveNetModel(): PoseModel<BasePose> {
         if (!model) {
             throw new Error('movenet not loaded.');
         }
+        // console.log('movenet inference');
         const poses: Pose[] = await model.estimatePoses(video);
         const inference = poses.map(pose => ({
             score: pose.score,
@@ -77,7 +87,13 @@ export function moveNetModel(): PoseModel<BasePose> {
         }));
         return inference;
     };
-    return { id, name, load, runInference };
+    const dispose = (): void => {
+        if (model) {
+            model.dispose();
+            model = null;
+        }
+    };
+    return { id, name, load, runInference, dispose };
 }
 
 export function blazeNetModel(): PoseModel<Pose3D> {
@@ -97,13 +113,13 @@ export function blazeNetModel(): PoseModel<Pose3D> {
         if (!model) {
             throw new Error('blazepose not loaded.');
         }
+        // console.log('blazepose inference');
         const poses: Pose[] = await model.estimatePoses(video);
         const inference = poses.map(pose => ({
             score: pose.score,
             keypoints: pose.keypoints.map(kp => ({
                 x: kp.x,
                 y: kp.y,
-                z: kp.z || 0,
                 score: kp.score,
                 name: kp.name
             })),
@@ -117,8 +133,13 @@ export function blazeNetModel(): PoseModel<Pose3D> {
         }));
         return inference;
     };
-
-    return { id, name, load, runInference };
+    const dispose = (): void => {
+        if (model) {
+            model.dispose();
+            model = null;
+        }
+    };
+    return { id, name, load, runInference, dispose };
 }
 
 export function noModel(): PoseModel<BasePose> {
@@ -127,11 +148,14 @@ export function noModel(): PoseModel<BasePose> {
     const name = 'None';
 
     const load = async(): Promise<void> => { };
-    const runInference: (video: HTMLVideoElement) => Promise<BasePose[]> = (video) => {   
-        console.log(video.width); // placeholder to allow ignoring video param
-        return Promise.resolve([]);
-    };
-    return { id, name, load, runInference };
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const runInference = async (video: HTMLVideoElement): Promise<BasePose[]> => {
+        // console.log('no inference ', video.width);
+        return [];
+    }
+    const dispose = (): void => { };
+    return { id, name, load, runInference, dispose };
 }
 
 export const modelOptions: (PoseModel<BasePose>)[] = [ poseNetModel(), moveNetModel(), blazeNetModel(), noModel()];
