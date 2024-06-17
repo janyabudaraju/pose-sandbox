@@ -1,12 +1,14 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import Webcam from "react-webcam";
-import * as posenet from "@tensorflow-models/posenet";
-import { drawKeypoints2D } from "../utils/utilities";
+// import { drawKeypoints2D } from "../utils/utilities";
 import { Box } from "@chakra-ui/react";
+import { PoseModel, BasePose } from "../utils/ModelDefinitions";
 
-// TODO: add prop for model
+type Props = {
+  model: PoseModel<BasePose>;
+};
 
-function WebcamDisplay(){
+function WebcamDisplay({model}: Props){
 
     const camRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,41 +19,30 @@ function WebcamDisplay(){
     const prevTime = useRef(Date.now());
 
     // function to run inference on a video frame and draw the corresponding keypoints.
-    const runInference = useCallback(async (net: posenet.PoseNet) => {
-        if (camRef.current?.video?.readyState === 4) {
-          const vid = camRef.current.video;
+    const estimatePose = useCallback(async () => {
+      if (camRef.current?.video?.readyState === 4) {
+          const video = camRef.current.video;
           const canvas = canvasRef.current;
-          if(canvas) {
-            // obtain intrinsic video dims and set html vid and canvas dims
-            const vidW = vid.videoWidth;
-            const vidH = vid.videoHeight;
-            vid.width = vidW;
-            vid.height = vidH;
-
-            if (canvas.width !== vidW || canvas.height !== vidH) {
-              canvas.width = vidW;
-              canvas.height = vidH;
-            }
-            // get prediction
-            const pose = await net.estimateSinglePose(vid);
-
-            const ctx = canvas.getContext("2d");
-            if(ctx) {
-              ctx.clearRect(0, 0, vidW, vidH);
-              drawKeypoints2D(pose["keypoints"], 0.1, ctx);
-            }
+          if (canvas && video) {
+              const poseData = await model.runInference(video); // Using the model from props
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                  ctx.clearRect(0, 0, video.videoWidth, video.videoHeight);
+                  console.log(poseData);
+              }
           }
-        }
-        frameCount.current += 1;
-        requestRef.current = requestAnimationFrame(() => runInference(net));
-      }, []);
+      }
+
+      frameCount.current += 1;
+      requestRef.current = requestAnimationFrame(estimatePose);
+    }, [model]);
 
       // function to loop the runInference function for each frame of the video.
       const runPosenet = useCallback(async () => {
-        const net = await posenet.load();
-        console.log("posenet model loaded.");
-        requestRef.current = requestAnimationFrame(() => runInference(net));
-      }, [runInference]);
+        await model.load();
+        console.log("model loaded.");
+        requestRef.current = requestAnimationFrame(() => estimatePose());
+      }, [model, estimatePose]);
 
       // hook to start the loop and clean up as necessary.
       useEffect(() => {
@@ -75,7 +66,7 @@ function WebcamDisplay(){
         // recalculate fps every second
         const interval = setInterval(calculateFps, 1000);
         return () => clearInterval(interval);
-      }, [fps]);
+      }, []);
 
       return (
         <div style={{ position: 'relative'}}>

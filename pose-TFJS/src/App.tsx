@@ -5,7 +5,6 @@ import { Box, Flex, Heading } from "@chakra-ui/react";
 import { useState } from 'react';
 import { modelOptions } from './utils/ModelDefinitions';
 
-
 // TODO:
 //  load different models based on dropdown selection
 //  have some sort of data logging mechanism. (i could just pull the points, but that feels like missing
@@ -17,18 +16,28 @@ import { modelOptions } from './utils/ModelDefinitions';
 
 function App() {
 
-    const [selectedModel, setSelectedModel] = useState(modelOptions[0].id);
-    console.log(selectedModel);
+    const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
+    // console.log(selectedModel);
+    const handleModelChange = (modelId: string) => {
+        const newModel = modelOptions.find(model => model.id === modelId);
+        if (newModel) {
+            setSelectedModel(newModel);
+            console.log('set model to: ', newModel.id)
+        }
+        else {
+            console.log('invalid selected model');
+        }
+    };
 
     return (
         <Box textAlign="center" p="4">
         <Heading mb="0">pose sandbox</Heading>
         <Flex direction="row" align="center" justify="space-between" w="100%" p="4">
                 <Box flex="1" minW="0" w="70%" overflow='auto'>
-                    <WebcamDisplay />
+                    <WebcamDisplay model={selectedModel}/>
                 </Box>
                 <Box flex="none" minW="200px" borderRadius="lg" p="10px"  m="2" borderWidth="3px" height='95vh'>
-                    <ModelSelect onModelChange={setSelectedModel}/>
+                    <ModelSelect onModelChange={handleModelChange}/>
                 </Box>
             </Flex>
         </Box>

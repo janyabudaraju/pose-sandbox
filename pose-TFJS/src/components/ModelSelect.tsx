@@ -1,8 +1,7 @@
 
 import { Radio, RadioGroup, Stack, Heading } from "@chakra-ui/react";
-import { PoseModel, BasePose, poseNetModel, moveNetModel, blazeNetModel } from "../utils/ModelDefinitions";
-
-const modelOptions: (PoseModel<BasePose>)[] = [ poseNetModel(), moveNetModel(), blazeNetModel()];
+// import { PoseModel, BasePose, poseNetModel, moveNetModel, blazeNetModel } from "../utils/ModelDefinitions";
+import { modelOptions } from "../utils/ModelDefinitions";
 
 type Props = {
     onModelChange: (modelId: string) => void;

@@ -115,3 +115,5 @@ export function blazeNetModel(): PoseModel<Pose3D> {
 
     return { id, name, load, runInference };
 }
+
+export const modelOptions: (PoseModel<BasePose>)[] = [ poseNetModel(), moveNetModel(), blazeNetModel()];
