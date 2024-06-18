@@ -86,11 +86,12 @@ function WebcamDisplay({model}: Props){
           setFps(resultFps);
           frameCount.current = 0;
           prevTime.current = now;
+          console.log(model.name + ' fps ' + resultFps);
         };
         // recalculate fps every second
         const interval = setInterval(calculateFps, 1000);
         return () => clearInterval(interval);
-      }, []);
+      }, [model.name]);
 
       return (
         <div style={{ position: 'relative'}}>
@@ -102,8 +103,8 @@ function WebcamDisplay({model}: Props){
                 width: '100%',
                 height: '100%',
               }} 
-              // videoConstraints={{ width: 1280, height: 720, facingMode: "user"}}
-              videoConstraints={{ width: 1280, height: 720, facingMode: "user", frameRate: { ideal: 120, max: 120 } }}
+              videoConstraints={{ width: 1280, height: 720, facingMode: "user"}}
+              // videoConstraints={{ width: 1280, height: 720, facingMode: "user", frameRate: 15 }}
             />
             <canvas 
               ref={canvasRef} 

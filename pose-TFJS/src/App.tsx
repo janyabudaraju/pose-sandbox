@@ -3,7 +3,8 @@ import WebcamDisplay from './components/WebcamDisplay'
 import ModelSelect from './components/ModelSelect';
 import { Box, Flex, Heading } from "@chakra-ui/react";
 import { useState } from 'react';
-import { modelOptions } from './utils/ModelDefinitions';
+import { modelOptions, noModel } from './utils/ModelDefinitions';
+// import RawWebcam from './components/RawWebcam';
 
 // TODO:
 //  load different models based on dropdown selection
@@ -39,6 +40,9 @@ function App() {
                 <Box flex="none" minW="200px" borderRadius="lg" p="10px"  m="2" borderWidth="3px" height='95vh'>
                     <ModelSelect onModelChange={handleModelChange}/>
                 </Box>
+                <div style={{ display: 'none' }}> 
+                    <WebcamDisplay model={noModel()}/>
+                </div>
             </Flex>
         </Box>
     );
