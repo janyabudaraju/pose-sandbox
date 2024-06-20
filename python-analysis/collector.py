@@ -6,6 +6,11 @@ from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions
 from mediapipe.tasks.python.core.base_options import BaseOptions
 
+POSENET_SHAPE = 257
+MOVENET_SHAPE = 192
+POSENET_DTYPE = tf.float32
+MOVENET_DTYPE = tf.uint8
+
 def load_posenet():
     interpreter = tf.lite.Interpreter(model_path="python-analysis/models/posenet.tflite")
     interpreter.allocate_tensors()
@@ -23,7 +28,9 @@ def load_blazepose(model_path = 'python-analysis/models/blazepose.task'):
     model = PoseLandmarker.create_from_options(options)
     return model
 
-def run_inference_interpreter(interpreter, img, dtype=tf.uint8, shape=257):
+def run_inference_tflite(interpreter, img, dtype, shape=257):
+    # TODO: check how to perform this resize without distortion. this will not yield accurate kp
+    # positions, probably.
     input_image = cv.resize(img, (shape, shape))
     input_image = tf.cast(input_image, dtype=dtype)
     input_image = tf.expand_dims(input_image, axis=0)
@@ -35,17 +42,27 @@ def run_inference_interpreter(interpreter, img, dtype=tf.uint8, shape=257):
     # TODO: convert to standard form
     return kps
 
-def run_inference_mp(model, img):
+def process_video(inference_function, model, vid_path, write_path = 'python-analysis/data/processed'):
+    cap = cv.VideoCapture(vid_path)
+
+    while (cap.isOpened()):
+        _, frame = cap.read()
+        inf = inference_function(model, frame)
+        # TODO: dump inference to;..... somewhere
+    # TODO: write to write path in some form. probably json
+
+def movenet(interpreter, img):
+    return run_inference_tflite(interpreter, img, dtype = MOVENET_DTYPE, shape=MOVENET_SHAPE)
+
+def posenet(interpreter, img):    
+    return run_inference_tflite(interpreter, img, dtype = POSENET_DTYPE, shape=POSENET_SHAPE)
+
+def blazepose(model, img):
+    # TODO: check that this doesn't cause distortion.
     mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=img)
     output = model.detect(mp_img)
     # TODO: convert to standard form
     return output
 
-POSENET_SHAPE = 257
-MOVENET_SHAPE = 192
-POSENET_DTYPE = tf.float32
-MOVENET_DTYPE = tf.uint8
-
 model = load_posenet()
 im = cv.imread('python-analysis/data/raw/test.jpg', cv.IMREAD_COLOR)
-op = run_inference_interpreter(model, im, dtype=tf.float32)
