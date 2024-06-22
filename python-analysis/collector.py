@@ -5,11 +5,7 @@ import mediapipe as mp
 from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions
 from mediapipe.tasks.python.core.base_options import BaseOptions
-
-POSENET_SHAPE = 257
-MOVENET_SHAPE = 192
-POSENET_DTYPE = tf.float32
-MOVENET_DTYPE = tf.uint8
+import definitions as defs
 
 def load_posenet():
     interpreter = tf.lite.Interpreter(model_path="python-analysis/models/posenet.tflite")
@@ -42,6 +38,16 @@ def run_inference_tflite(interpreter, img, dtype, shape=257):
     # TODO: convert to standard form
     return kps
 
+def process_posenet(map, threshold=0.5):
+    keypoints = []
+    for idx in range(map.shape[-1]):
+        y, x = np.unravel_index(np.argmax(map[..., idx]), map.shape[:2])
+        conf = map[y, x, idx]
+        if conf > threshold:
+            kp = defs.KP2D(idx, y, x, conf, defs.KP_DICT_33[idx])
+            keypoints.append(kp)
+    return keypoints
+
 def process_video(inference_function, model, vid_path, write_path = 'python-analysis/data/processed'):
     cap = cv.VideoCapture(vid_path)
 
@@ -52,17 +58,29 @@ def process_video(inference_function, model, vid_path, write_path = 'python-anal
     # TODO: write to write path in some form. probably json
 
 def movenet(interpreter, img):
-    return run_inference_tflite(interpreter, img, dtype = MOVENET_DTYPE, shape=MOVENET_SHAPE)
+    output = run_inference_tflite(interpreter, img, dtype = defs.MOVENET_DTYPE, shape=defs.MOVENET_SHAPE)
+    return output
 
 def posenet(interpreter, img):    
-    return run_inference_tflite(interpreter, img, dtype = POSENET_DTYPE, shape=POSENET_SHAPE)
+    output = run_inference_tflite(interpreter, img, dtype = defs.POSENET_DTYPE, shape=defs.POSENET_SHAPE)
+    return output
 
 def blazepose(model, img):
     # TODO: check that this doesn't cause distortion.
     mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=img)
     output = model.detect(mp_img)
+    # print(output.pose_landmarks)
     # TODO: convert to standard form
-    return output
+    return output.pose_landmarks
 
-model = load_posenet()
+def to_KP3D(output):
+    
+    pass
+
+def to_KP2D(output):
+    pass
+
+model = load_blazepose()
 im = cv.imread('python-analysis/data/raw/test.jpg', cv.IMREAD_COLOR)
+output = blazepose(model, im)
+print(output.shape)
