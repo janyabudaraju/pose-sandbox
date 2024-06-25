@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+NUM_COCO_KPS = 17
 POSENET_SHAPE = 257
 MOVENET_SHAPE = 192
 POSENET_DTYPE = tf.float32
