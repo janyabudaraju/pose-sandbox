@@ -1,6 +1,12 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import { PoseDetector, Pose } from '@tensorflow-models/pose-detection';
 
+export interface Inference {
+    timestamp: number;
+    modelName: string;
+    poseData: BasePose[];
+}
+
 export interface KP2D {
     x: number | undefined;
     y: number | undefined;

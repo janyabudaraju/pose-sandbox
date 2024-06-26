@@ -1,9 +1,9 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import Webcam from "react-webcam";
-// import { drawKeypoints2D } from "../utils/utilities";
 import { Box } from "@chakra-ui/react";
-import { PoseModel, BasePose } from "../utils/ModelDefinitions";
+import { PoseModel, BasePose, Inference } from "../utils/ModelDefinitions";
 import { drawKeypoints2D } from "../utils/utilities";
+import RecordRTC from 'recordrtc';
 
 type Props = {
   model: PoseModel<BasePose>;
@@ -12,10 +12,14 @@ type Props = {
 function WebcamDisplay({model}: Props){
 
     const [isModelChanged, setIsModelChanged] = useState(true);
+    const curModelRef = useRef<PoseModel<BasePose> | null>(null);
+    const [inferenceData, setInferenceData] = useState<Inference[]>([]);
+
     const camRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const recorderRef = useRef<RecordRTC | null>(null);
+
     const requestRef =  useRef<number | undefined>(undefined);
-    const curModelRef = useRef<PoseModel<BasePose> | null>(null);
     const [fps, setFps] = useState(0);
     const frameCount = useRef(0);
     const prevTime = useRef(Date.now());
@@ -43,6 +47,9 @@ function WebcamDisplay({model}: Props){
               drawKeypoints2D(pose.keypoints, 0.1, ctx); 
             });
           }
+          const timestamp = video.currentTime;
+          const modelName = model.name;
+          setInferenceData(prevData => [...prevData, { timestamp, modelName, poseData }]);
         }
       }
       frameCount.current += 1;
@@ -93,8 +100,47 @@ function WebcamDisplay({model}: Props){
         return () => clearInterval(interval);
       }, [model.name]);
 
+      const startRecording = () => {
+        if (camRef.current?.video) {
+          setInferenceData([]);
+          const newRecorder = new RecordRTC(camRef.current.video, { type: "video" });
+          recorderRef.current = newRecorder;
+          recorderRef.current?.startRecording();
+        }
+      };
+
+      const stopRecording = () => {
+        if (recorderRef.current) {
+          recorderRef.current.stopRecording(() => {
+            const blob = recorderRef.current?.getBlob();
+            if(blob) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.style.display = "none";
+              a.href = url;
+              a.download = "recorded_video.mp4";
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+            }            
+            const blobData = new Blob([JSON.stringify(inferenceData)], { type: "application/json" });
+            const urlData = URL.createObjectURL(blobData);
+            const aData = document.createElement("a");
+            aData.style.display = "none";
+            aData.href = urlData;
+            aData.download = "inference_data.json";
+            document.body.appendChild(aData);
+            aData.click();
+            window.URL.revokeObjectURL(urlData);
+          });
+          recorderRef.current.destroy();
+        }
+      };
+
       return (
         <div style={{ position: 'relative'}}>
+          <button onClick={startRecording}>Start Recording</button>
+          <button onClick={stopRecording}>Stop Recording</button>
           <div style={{ position: 'relative', width: '1280px', height: '720px' }} className="mirrored-container">
             <Webcam 
               ref={camRef} 
