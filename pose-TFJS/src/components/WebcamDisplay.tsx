@@ -93,7 +93,6 @@ function WebcamDisplay({model}: Props){
           setFps(resultFps);
           frameCount.current = 0;
           prevTime.current = now;
-          console.log(model.name + ' fps ' + resultFps);
         };
         // recalculate fps every second
         const interval = setInterval(calculateFps, 1000);
@@ -101,9 +100,9 @@ function WebcamDisplay({model}: Props){
       }, [model.name]);
 
       const startRecording = () => {
-        if (camRef.current?.video) {
+        if (camRef.current?.stream) {
           setInferenceData([]);
-          const newRecorder = new RecordRTC(camRef.current.video, { type: "video" });
+          const newRecorder = new RecordRTC(camRef.current.stream, { type: "video" });
           recorderRef.current = newRecorder;
           recorderRef.current?.startRecording();
         }
@@ -133,7 +132,6 @@ function WebcamDisplay({model}: Props){
             aData.click();
             window.URL.revokeObjectURL(urlData);
           });
-          recorderRef.current.destroy();
         }
       };
 
