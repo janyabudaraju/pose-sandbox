@@ -1,4 +1,5 @@
 import tensorflow as tf
+from typing import List
 
 NUM_COCO_KPS = 17
 POSENET_SHAPE = 257
@@ -63,18 +64,26 @@ KP_DICT_33 = {
 }
 
 class KP2D:
-    def __init__(self, idx, x, y, score, name):
-        self.idx = idx
+    def __init__(self, x, y, score, name):
         self.x = x
         self.y = y
         self.prob = score
         self.name = name
 
 class KP3D:
-    def __init__(self, idx, x, y, z, score, name):
-        self.idx = idx
+    def __init__(self, x, y, z, score, name):
         self.x = x
         self.y = y
         self.z = z
         self.prob = score
         self.name = name
+
+class Pose:
+    def __init__(self, score: float, kps: List[KP2D]):
+        self.score = score
+        self.kps = kps
+
+class Pose3D(Pose):
+    def __init__(self, score: float, kps: List[KP2D], kps3d: List[KP3D]):
+        self.kps3d = kps3d
+        super().__init__(score, kps) 
