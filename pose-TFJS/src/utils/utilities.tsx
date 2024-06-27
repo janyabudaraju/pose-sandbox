@@ -2,8 +2,7 @@
 
 import { KP2D } from "./ModelDefinitions";
 
-export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, ctx: CanvasRenderingContext2D, scale = 1) {
-    const color = "aqua"
+export function drawKeypoints2D(keypoints: KP2D[], minConfidence: number, color: string, ctx: CanvasRenderingContext2D, scale = 1) {
     const rad = 3
 
     // console.log(keypoints);

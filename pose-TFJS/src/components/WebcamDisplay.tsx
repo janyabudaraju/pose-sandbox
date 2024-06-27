@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import Webcam from "react-webcam";
 import { Box } from "@chakra-ui/react";
-import { PoseModel, BasePose, Inference } from "../utils/ModelDefinitions";
+import { PoseModel, BasePose, Inference, modelOptions } from "../utils/ModelDefinitions";
 import { drawKeypoints2D } from "../utils/utilities";
 import RecordRTC from 'recordrtc';
 
@@ -36,45 +36,55 @@ function WebcamDisplay({models}: Props){
           video.width = video.videoWidth;
           video.height = video.videoHeight;
         }
-        if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {     
+        if (canvas && video && video.width > 0 && video.height > 0) {     
           if (canvas.width != video.width || canvas.height != video.height) {
             canvas.width = video.width;
             canvas.height = video.height;
           }
-          const poseData = await model.runInference(video);
+          const modelInferences = await Promise.all(models.map(async (model) => {
+            const poseData = await model.runInference(video);
+            return { timestamp: video.currentTime, modelId: model.id, poseData };
+          }));
+
+          //const poseData = await model.runInference(video);
 
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.clearRect(0, 0, video.width, video.height);
-            poseData.forEach(pose => { 
-              drawKeypoints2D(pose.keypoints, 0.1, ctx); 
+            modelInferences.forEach(({ poseData, modelId }) => {
+
+              const color = modelOptions.find(model => model.id === modelId)?.color
+              if(color) {
+                poseData.forEach(pose => {
+                  drawKeypoints2D(pose.keypoints, 0.1, color, ctx);
+                });
+              }
             });
           }
-          const timestamp = video.currentTime;
-          const modelName = model.name;
-          setInferenceData(prevData => [...prevData, { timestamp, modelName, poseData }]);
+          setInferenceData(prevData => [...prevData, modelInferences]);
         }
       }
       frameCount.current += 1;
       requestRef.current = requestAnimationFrame(estimatePose);
-    }, [model]);
+    }, [models]);
 
       // function to loop the runInference function for each frame of the video.
       const runModel = useCallback(async () => {
-        if (curModelRef.current) {
-          curModelRef.current.dispose();
-        }
+        curModelRefs.current.forEach(model => model.dispose());
+        curModelRefs.current = [];
 
-        await model.load();
-        curModelRef.current = model;
-        console.log("model loaded. ", model.name);
+        await Promise.all(models.map(async (model) => {
+          await model.load();
+        }));
+        curModelRefs.current = models;
+        console.log("Models loaded.");
 
         requestRef.current = requestAnimationFrame(() => estimatePose());
-      }, [model, estimatePose]);
+      }, [models, estimatePose]);
 
       useEffect(() => {
         setIsModelChanged(true);
-      }, [model]);
+      }, [models]);
       
       // hook to start the loop and clean up as necessary.
       useEffect(() => {
@@ -100,7 +110,7 @@ function WebcamDisplay({models}: Props){
         // recalculate fps every second
         const interval = setInterval(calculateFps, 1000);
         return () => clearInterval(interval);
-      }, [model.name]);
+      }, []);
 
       const startRecording = () => {
         if (camRef.current?.stream) {

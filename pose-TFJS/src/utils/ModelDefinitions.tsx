@@ -3,7 +3,7 @@ import { PoseDetector, Pose } from '@tensorflow-models/pose-detection';
 
 export interface Inference {
     timestamp: number;
-    modelName: string;
+    modelId: string;
     poseData: BasePose[];
 }
 
@@ -28,6 +28,7 @@ export interface Pose3D extends BasePose {
 export interface PoseModel <T> {
     id: string;
     name: string;
+    color: string;
     load: () => Promise<void>;
     runInference: (video: HTMLVideoElement) => Promise<T[]>;
     dispose: () => void;
@@ -37,6 +38,8 @@ export function poseNetModel(): PoseModel<BasePose> {
     let model: PoseDetector | null = null;
     const id = 'posenet';
     const name = 'PoseNet';
+    const color = 'orange';
+
     const load = async (): Promise<void> => {
         model = await poseDetection.createDetector(poseDetection.SupportedModels.PoseNet);
     };
@@ -65,13 +68,15 @@ export function poseNetModel(): PoseModel<BasePose> {
             model = null;
         }
     };
-    return { id, name, load, runInference, dispose };
+    return { id, name, color, load, runInference, dispose };
 }
 
 export function moveNetModel(): PoseModel<BasePose> {
     let model: PoseDetector | null = null;
     const id = 'movenet';
     const name = 'MoveNet';
+    const color = 'blue';
+
     const load = async (): Promise<void> => {
         model = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet);
     };
@@ -99,13 +104,15 @@ export function moveNetModel(): PoseModel<BasePose> {
             model = null;
         }
     };
-    return { id, name, load, runInference, dispose };
+    return { id, name, color, load, runInference, dispose };
 }
 
 export function blazeNetModel(): PoseModel<Pose3D> {
     let model: PoseDetector | null = null;
     const id = 'blazepose';
     const name = 'BlazePose';
+    const color = 'red';
+
     const load = async (): Promise<void> => {
         const detectorConfig = {
             runtime: 'tfjs',
@@ -145,14 +152,14 @@ export function blazeNetModel(): PoseModel<Pose3D> {
             model = null;
         }
     };
-    return { id, name, load, runInference, dispose };
+    return { id, name, color, load, runInference, dispose };
 }
 
 export function noModel(): PoseModel<BasePose> {
     // const model: PoseDetector | null = null;
     const id = 'none';
     const name = 'None';
-
+    const color = '';
     const load = async(): Promise<void> => { };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -161,7 +168,7 @@ export function noModel(): PoseModel<BasePose> {
         return [];
     }
     const dispose = (): void => { };
-    return { id, name, load, runInference, dispose };
+    return { id, name, color, load, runInference, dispose };
 }
 
 export const modelOptions: (PoseModel<BasePose>)[] = [ blazeNetModel(), poseNetModel(), moveNetModel(), noModel()];
