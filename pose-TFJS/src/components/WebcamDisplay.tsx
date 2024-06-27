@@ -3,7 +3,6 @@ import Webcam from "react-webcam";
 import { Box, Button } from "@chakra-ui/react";
 import { PoseModel, BasePose, Inference, modelOptions } from "../utils/ModelDefinitions";
 import { drawKeypoints2D } from "../utils/utilities";
-import RecordRTC from 'recordrtc';
 
 type Props = {
   models: PoseModel<BasePose>[];
@@ -15,12 +14,12 @@ function WebcamDisplay({models}: Props){
     const curModelRefs = useRef<PoseModel<BasePose>[]>([]);
     const [inferenceData, setInferenceData] = useState<Inference[][]>([]);
 
-    // const curModelRef = useRef<PoseModel<BasePose> | null>(null);
-    // const [inferenceData, setInferenceData] = useState<Inference[]>([]);
-
     const camRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const recorderRef = useRef<RecordRTC | null>(null);
+
+    const [recordedChunks, setRecordedChunks] = useState<BlobPart[]>([]);
+    const [recording, setRecording] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
     const requestRef =  useRef<number | undefined>(undefined);
     const [fps, setFps] = useState(0);
@@ -112,41 +111,60 @@ function WebcamDisplay({models}: Props){
         return () => clearInterval(interval);
       }, []);
 
-      const startRecording = () => {
-        if (camRef.current?.stream) {
-          setInferenceData([]);
-          const newRecorder = new RecordRTC(camRef.current.stream, { type: "video" });
-          recorderRef.current = newRecorder;
-          recorderRef.current?.startRecording();
+      const handleDataAvailable = useCallback(({ data }: BlobEvent) => {
+        if (data.size > 0) {
+            setRecordedChunks(prev => [...prev, data]);
         }
-      };
+      }, []);
 
-      const stopRecording = () => {
-        if (recorderRef.current) {
-          recorderRef.current.stopRecording(() => {
-            const blob = recorderRef.current?.getBlob();
-            if(blob) {
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.style.display = "none";
-              a.href = url;
-              a.download = "recorded_video.mp4";
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(url);
-            }            
-            const blobData = new Blob([JSON.stringify(inferenceData)], { type: "application/json" });
-            const urlData = URL.createObjectURL(blobData);
-            const aData = document.createElement("a");
-            aData.style.display = "none";
-            aData.href = urlData;
-            aData.download = "inference_data.json";
-            document.body.appendChild(aData);
-            aData.click();
-            window.URL.revokeObjectURL(urlData);
-          });
+      const handleStartRecording = useCallback(() => {
+        if (camRef.current && camRef.current.video) {
+            setInferenceData([]);
+            const videoStream: MediaStream = camRef.current.video.srcObject as MediaStream;
+            setRecording(true);
+            mediaRecorderRef.current = new MediaRecorder(videoStream, { mimeType: 'video/webm' });
+            mediaRecorderRef.current.addEventListener('dataavailable', handleDataAvailable);
+            mediaRecorderRef.current.start();
         }
-      };
+      }, [handleDataAvailable]);
+
+      const downloadFile = (url: string, filename: string) => {
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    };
+
+      const handleStopRecording = useCallback(() => {
+        mediaRecorderRef.current?.stop();
+        mediaRecorderRef.current?.addEventListener('stop', () => {
+            if (recordedChunks.length) {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoUrl = URL.createObjectURL(videoBlob);
+                downloadFile(videoUrl, "recorded_video.webm");
+    
+                const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
+                const dataUrl = URL.createObjectURL(dataBlob);
+                downloadFile(dataUrl, "inference_data.json");
+    
+                setRecording(false);
+                setRecordedChunks([]);
+                setInferenceData([]);
+            }
+        });
+    }, [recordedChunks, inferenceData]);
+
+      useEffect(() => {
+        if (!recording && recordedChunks.length) {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            return () => URL.revokeObjectURL(url);
+        }
+    }, [recording, recordedChunks]);
 
       return (
         <div style={{ position: 'relative'}}>
@@ -175,8 +193,8 @@ function WebcamDisplay({models}: Props){
           <Box position="absolute" top="0" left="0" p="2" bgColor="rgba(0,0,0,0.5)" color="white" fontSize="sm">
             {fps.toFixed(1)} FPS
           </Box>
-          <Button onClick={startRecording}>Start Recording</Button>
-          <Button onClick={stopRecording}>Stop Recording</Button>
+          <Button onClick={handleStartRecording}>Start Recording</Button>
+          <Button onClick={handleStopRecording}>Stop Recording</Button>
         </div>
       );
 }
