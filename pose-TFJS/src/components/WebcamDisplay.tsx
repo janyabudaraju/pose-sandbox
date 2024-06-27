@@ -23,7 +23,8 @@ function WebcamDisplay({models}: Props){
 
     const requestRef =  useRef<number | undefined>(undefined);
     const [fps, setFps] = useState(0);
-    const frameCount = useRef(0);
+    const frameCountFps = useRef(0);
+    const frameCountIdx = useRef(0);
     const prevTime = useRef(Date.now());
 
     // function to run inference on a video frame and draw the corresponding keypoints.
@@ -42,7 +43,7 @@ function WebcamDisplay({models}: Props){
           }
           const modelInferences = await Promise.all(models.map(async (model) => {
             const poseData = await model.runInference(video);
-            return { timestamp: video.currentTime, modelId: model.id, poseData };
+            return { timeStamp: video.currentTime, frameIdx: frameCountIdx.current, modelId: model.id, poseData };
           }));
 
           //const poseData = await model.runInference(video);
@@ -63,7 +64,8 @@ function WebcamDisplay({models}: Props){
           setInferenceData(prevData => [...prevData, modelInferences]);
         }
       }
-      frameCount.current += 1;
+      frameCountFps.current += 1;
+      frameCountIdx.current += 1;
       requestRef.current = requestAnimationFrame(estimatePose);
     }, [models]);
 
@@ -101,9 +103,9 @@ function WebcamDisplay({models}: Props){
         const calculateFps = () => {
           const now = Date.now();
           const deltaTime = (now - prevTime.current) / 1000;
-          const resultFps = frameCount.current / deltaTime;
+          const resultFps = frameCountFps.current / deltaTime;
           setFps(resultFps);
-          frameCount.current = 0;
+          frameCountFps.current = 0;
           prevTime.current = now;
         };
         // recalculate fps every second
@@ -120,6 +122,7 @@ function WebcamDisplay({models}: Props){
       const handleStartRecording = useCallback(() => {
         if (camRef.current && camRef.current.video) {
             setInferenceData([]);
+            frameCountIdx.current = 0;
             const videoStream: MediaStream = camRef.current.video.srcObject as MediaStream;
             setRecording(true);
             mediaRecorderRef.current = new MediaRecorder(videoStream, { mimeType: 'video/webm' });

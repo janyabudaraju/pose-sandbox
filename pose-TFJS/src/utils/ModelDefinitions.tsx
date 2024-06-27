@@ -2,7 +2,8 @@ import * as poseDetection from '@tensorflow-models/pose-detection';
 import { PoseDetector, Pose } from '@tensorflow-models/pose-detection';
 
 export interface Inference {
-    timestamp: number;
+    timeStamp: number;
+    frameIdx: number;
     modelId: string;
     poseData: BasePose[];
 }

@@ -22,7 +22,7 @@ def clean_dict_from_JSON(filepath: str):
 
     for entry in parsed:
         for pred in entry:
-            timestamp = pred['timestamp']        
+            timestamp = pred['frameIdx']
             model_id = pred['modelId']
             pose_data = pred['poseData']
             pose_items = []
@@ -52,7 +52,6 @@ def get_timestamp_from_frame(vidpath):
     cap = cv.VideoCapture(vidpath)
 
     fps = cap.get(cv.CAP_PROP_FPS)
-    print(fps)
     frame_count = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
     duration = frame_count / fps
     
@@ -60,28 +59,24 @@ def get_timestamp_from_frame(vidpath):
     print(f"FPS: {fps}")
     print(f"total number of frames: {frame_count}")
 
-    # frame_index = 0
-    # while True:
-    #     ret, frame = cap.read()
-    #     if not ret:
-    #         break  # Break the loop if there are no frames to read
-        
-    #     # Calculate the timestamp for the current frame
-    #     timestamp = frame_index / fps
-    #     print(f"Timestamp for frame {frame_index}: {timestamp}s")
-        
-    #     # Here you can add code to process the frame if necessary
-    #     # For example, displaying the frame:
-    #     # cv2.imshow('Frame', frame)
-    #     # if cv2.waitKey(25) & 0xFF == ord('q'):
-    #     #     break
 
-    #     frame_index += 1
+    frame_no = 0
+    while(cap.isOpened()):
+        frame_exists, _ = cap.read()
+        if frame_exists:
+            print("for frame : " + str(frame_no) + "   timestamp is: ", str(cap.get(cv.CAP_PROP_POS_MSEC)))
+            frame_no += 1
+        else:
+            break
+    frame_no += 1
 
-    # cap.release()
-    # cv2.destroyAllWindows()
+    cap.release()
 
-# convert_webm_to_mp4('python-analysis/data/raw/newvid.webm', 'python-analysis/data/raw/output.mp4')
-data = clean_dict_from_JSON('python-analysis/data/raw/inference_data_0627.json')
+convert_webm_to_mp4('python-analysis/data/raw/video.webm', 'python-analysis/data/raw/output.mp4')
+data = clean_dict_from_JSON('python-analysis/data/raw/data.json')
 print(data.keys())
 get_timestamp_from_frame('python-analysis/data/raw/output.mp4')
+
+# TODO: apply scaling to frames IN THE json read function
+# TODO: auto determine whether conversion needs to occur by checking the extension
+# TODO: validate predictions
