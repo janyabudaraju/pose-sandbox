@@ -14,10 +14,8 @@ function App() {
             modelOptions.find(model => model.id === modelId)
         ).filter((model): model is PoseModel<BasePose> => model !== undefined);
     
-        if (newModels.length > 0) {
-            setSelectedModels(newModels);
-            console.log('set models to:', newModels.map(model => model.id));
-        }
+        setSelectedModels(newModels);
+        console.log('set models to:', newModels.map(model => model.id));
     };
 
     return (

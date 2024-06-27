@@ -171,4 +171,4 @@ export function noModel(): PoseModel<BasePose> {
     return { id, name, color, load, runInference, dispose };
 }
 
-export const modelOptions: (PoseModel<BasePose>)[] = [ blazeNetModel(), poseNetModel(), moveNetModel(), noModel()];
+export const modelOptions: (PoseModel<BasePose>)[] = [ blazeNetModel(), poseNetModel(), moveNetModel() ];
