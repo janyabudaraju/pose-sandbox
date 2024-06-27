@@ -6,14 +6,17 @@ import { drawKeypoints2D } from "../utils/utilities";
 import RecordRTC from 'recordrtc';
 
 type Props = {
-  model: PoseModel<BasePose>;
+  models: PoseModel<BasePose>[];
 };
 
-function WebcamDisplay({model}: Props){
+function WebcamDisplay({models}: Props){
 
     const [isModelChanged, setIsModelChanged] = useState(true);
-    const curModelRef = useRef<PoseModel<BasePose> | null>(null);
-    const [inferenceData, setInferenceData] = useState<Inference[]>([]);
+    const curModelRefs = useRef<PoseModel<BasePose>[]>([]);
+    const [inferenceData, setInferenceData] = useState<Inference[][]>([]);
+
+    // const curModelRef = useRef<PoseModel<BasePose> | null>(null);
+    // const [inferenceData, setInferenceData] = useState<Inference[]>([]);
 
     const camRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);

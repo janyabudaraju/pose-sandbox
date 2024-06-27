@@ -7,7 +7,7 @@ type Props = {
     onModelChange: (modelId: string) => void;
 };
 
-function ModelSelect({onModelChange}: Props){
+function ModelSelectRadio({onModelChange}: Props){
     const handleModelChange = (value: string) => {
         onModelChange(value);
         console.log(value);
@@ -29,4 +29,4 @@ function ModelSelect({onModelChange}: Props){
     )
 }
 
-export default ModelSelect;
+export default ModelSelectRadio;
