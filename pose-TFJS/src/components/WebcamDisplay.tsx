@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import Webcam from "react-webcam";
-import { Box } from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
 import { PoseModel, BasePose, Inference, modelOptions } from "../utils/ModelDefinitions";
 import { drawKeypoints2D } from "../utils/utilities";
 import RecordRTC from 'recordrtc';
@@ -150,8 +150,6 @@ function WebcamDisplay({models}: Props){
 
       return (
         <div style={{ position: 'relative'}}>
-          <button onClick={startRecording}>Start Recording</button>
-          <button onClick={stopRecording}>Stop Recording</button>
           <div style={{ position: 'relative', width: '1280px', height: '720px' }} className="mirrored-container">
             <Webcam 
               ref={camRef} 
@@ -177,6 +175,8 @@ function WebcamDisplay({models}: Props){
           <Box position="absolute" top="0" left="0" p="2" bgColor="rgba(0,0,0,0.5)" color="white" fontSize="sm">
             {fps.toFixed(1)} FPS
           </Box>
+          <Button onClick={startRecording}>Start Recording</Button>
+          <Button onClick={stopRecording}>Stop Recording</Button>
         </div>
       );
 }
