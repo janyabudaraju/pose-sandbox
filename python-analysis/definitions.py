@@ -1,5 +1,6 @@
 import tensorflow as tf
 from typing import List
+import cv2 as cv
 
 NUM_COCO_KPS = 17
 POSENET_SHAPE = 257
@@ -82,6 +83,11 @@ class Pose:
     def __init__(self, score: float, kps: List[KP2D]):
         self.score = score
         self.kps = kps
+    
+    def draw_on_frame(self, frame):
+        for kp in self.kps:
+            cv.circle(frame, (int(kp.x), int(kp.y)), 5, (0, 255, 0), -1)
+        return frame
 
 class Pose3D(Pose):
     def __init__(self, score: float, kps: List[KP2D], kps3d: List[KP3D]):
