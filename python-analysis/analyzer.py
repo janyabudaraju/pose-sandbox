@@ -23,7 +23,7 @@ def clean_dict_from_JSON(filepath: str):
 
     for entry in parsed:
         for pred in entry:
-            timestamp = pred['frameIdx']
+            frame_num = pred['frameIdx']
             model_id = pred['modelId']
             pose_data = pred['poseData']
             pose_items = []
@@ -44,9 +44,9 @@ def clean_dict_from_JSON(filepath: str):
                     cur_pose = Pose(overall_score, kp_items)
                 pose_items.append(cur_pose)
 
-            if not timestamp in formatted:
-                formatted[timestamp] = {}
-            formatted[timestamp][model_id] = pose_items
+            if not frame_num in formatted: # create empty dict for first instance of frame
+                formatted[frame_num] = {}
+            formatted[frame_num][model_id] = pose_items
     return formatted
 
 def get_timestamp_from_frame(vidpath):
@@ -59,7 +59,6 @@ def get_timestamp_from_frame(vidpath):
     print(f"total duration: {duration}s")
     print(f"FPS: {fps}")
     print(f"total number of frames: {frame_count}")
-
 
     frame_no = 0
     while(cap.isOpened()):
@@ -78,6 +77,25 @@ def get_conversion_factor(vidpath, max_json_frame):
     max_vid_frame = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
     return max_vid_frame / max_json_frame
 
+def get_data_for_frame(data, fnum, model_id):
+    poses = data[fnum][model_id]
+    return poses[0].kps
+    
+def get_data_for_adj_frame(data, fnum, model_id, cf):
+    fnum_adj = fnum * cf
+    return get_data_for_frame(data, fnum_adj, model_id)
+
+def get_frame_from_video(vidpath, fnum):
+    cap = cv.VideoCapture(vidpath)
+    cap.set(cv.CAP_PROP_POS_FRAMES, fnum-1)
+    _, frame = cap.read()
+    return frame
+
+def draw_pose_on_frame(frame, kps):
+    for kp in kps:
+        cv.circle(frame, (kp.x, kp.y), 1, 'red', -1)
+    return frame
+
 if __name__ == '__main__': 
     vid_path = ''
     json_path = ''
@@ -89,7 +107,7 @@ if __name__ == '__main__':
     
     data, max_jf = clean_dict_from_JSON(json_path)
     frame_cf = get_conversion_factor(vid_path, max_json_frame=max_jf)
-    
+
     
 
 # convert_webm_to_mp4('python-analysis/data/raw/video.webm', 'python-analysis/data/raw/output.mp4')
