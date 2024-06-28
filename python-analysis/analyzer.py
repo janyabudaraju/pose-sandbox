@@ -2,6 +2,7 @@ from definitions import Pose, Pose3D, KP2D, KP3D
 import json
 import cv2 as cv
 import subprocess
+from pathlib import Path
 
 def convert_webm_to_mp4(webm_path, mp4_path):
     command = [
@@ -72,11 +73,31 @@ def get_timestamp_from_frame(vidpath):
 
     cap.release()
 
-convert_webm_to_mp4('python-analysis/data/raw/video.webm', 'python-analysis/data/raw/output.mp4')
-data = clean_dict_from_JSON('python-analysis/data/raw/data.json')
-print(data.keys())
-get_timestamp_from_frame('python-analysis/data/raw/output.mp4')
+def get_conversion_factor(vidpath, max_json_frame):
+    cap = cv.VideoCapture(vidpath)
+    max_vid_frame = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+    return max_vid_frame / max_json_frame
+
+if __name__ == '__main__': 
+    vid_path = ''
+    json_path = ''
+
+    if not vid_path.endswith('.mp4'):
+        new_path = Path(vid_path).stem + '.mp4'
+        convert_webm_to_mp4(vid_path, new_path)
+        vid_path = new_path
+    
+    data, max_jf = clean_dict_from_JSON(json_path)
+    frame_cf = get_conversion_factor(vid_path, max_json_frame=max_jf)
+    
+    
+
+# convert_webm_to_mp4('python-analysis/data/raw/video.webm', 'python-analysis/data/raw/output.mp4')
+# data = clean_dict_from_JSON('python-analysis/data/raw/data.json')
+# print(data.keys())
+# get_timestamp_from_frame('python-analysis/data/raw/output.mp4')
 
 # TODO: apply scaling to frames IN THE json read function
 # TODO: auto determine whether conversion needs to occur by checking the extension
 # TODO: validate predictions
+# TODO: if this doesn't work try converting from seconds to frames using fps, maybe?
