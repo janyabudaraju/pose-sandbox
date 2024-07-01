@@ -23,6 +23,7 @@ def clean_dict_from_JSON(filepath: str):
     formatted = {}
     zeroed = False
     max_fn = -1
+    prior_fn = -1
 
     for entry in parsed:
         for pred in entry:
@@ -32,9 +33,14 @@ def clean_dict_from_JSON(filepath: str):
                 zeroed = True
             if not zeroed:
                 continue
+                        
+            if frame_num > prior_fn + 1:
+                continue
             
             if frame_num > max_fn:
                 max_fn = frame_num
+
+            prior_fn = frame_num
 
             model_id = pred['modelId']
             pose_data = pred['poseData']
@@ -60,6 +66,10 @@ def clean_dict_from_JSON(filepath: str):
                 formatted[frame_num] = {}
             if not model_id in formatted[frame_num]:
                 formatted[frame_num][model_id] = pose_items
+    
+    # print(json.dumps(parsed, indent=4))
+    # with open('output.json', 'w') as f:
+    #     json.dump(parsed, f, indent=4)
     return formatted, max_fn
 
 def get_timestamp_from_frame(vidpath):
@@ -87,7 +97,8 @@ def get_timestamp_from_frame(vidpath):
 def get_conversion_factor(vidpath, max_json_frame):
     cap = cv.VideoCapture(vidpath)
     max_vid_frame = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
-    return max_vid_frame / max_json_frame
+    print(f'[LOGGING: get_conversion_factor] max vid frame: {max_vid_frame} max json frame: {max_json_frame}')
+    return max_json_frame / max_vid_frame
 
 def get_data_for_frame(data, fnum, model_id):
     all_fnums = list(data.keys())
@@ -97,9 +108,9 @@ def get_data_for_frame(data, fnum, model_id):
         return None
     poses = data[closest_fnum][model_id]
     return poses[0].kps
-    
+
 def get_data_for_adj_frame(data, fnum, model_id, cf):
-    fnum_adj = fnum / cf
+    fnum_adj = fnum * cf
     # print(f'[LOGGING: get_data_for_adj_frame] original: {fnum} adjusted: {fnum_adj}')
     return get_data_for_frame(data, fnum_adj, model_id)
 
@@ -129,8 +140,8 @@ def draw_pose_on_frame(frame, kps, kp_mapping=None, skeleton_list=None):
     return frame
 
 if __name__ == '__main__': 
-    vid_path = 'python-analysis/data/raw/video.mp4'
-    json_path = 'python-analysis/data/raw/data.json'
+    vid_path = 'python-analysis/data/raw/recorded_video_0701.mp4'
+    json_path = 'python-analysis/data/raw/inference_data_0701.json'
 
     if not vid_path.endswith('.mp4'):
         new_path = Path(vid_path).with_suffix('.mp4')
@@ -139,8 +150,7 @@ if __name__ == '__main__':
     
     data, max_jf = clean_dict_from_JSON(json_path)
     frame_cf = get_conversion_factor(vid_path, max_json_frame=max_jf)
-
-    fn = 55
+    fn = 1
     model = 'movenet'
     kp_mapping = defs.KP_DICT_17
     skeleton = defs.SKELETON_17_KPS
@@ -157,4 +167,3 @@ if __name__ == '__main__':
         cv.waitKey(0)
 
 # TODO: validate predictions (if this doesn't work try converting from seconds to frames using fps, maybe)
-# TODO: add connections between points
