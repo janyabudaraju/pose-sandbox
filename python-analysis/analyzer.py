@@ -20,10 +20,21 @@ def clean_dict_from_JSON(filepath: str):
         parsed = json.load(f)
 
     formatted = {}
+    zeroed = False
+    max_fn = -1
 
     for entry in parsed:
         for pred in entry:
             frame_num = pred['frameIdx']
+            
+            if frame_num == 0:
+                zeroed = True
+            if not zeroed:
+                continue
+            
+            if frame_num > max_fn:
+                max_fn = frame_num
+
             model_id = pred['modelId']
             pose_data = pred['poseData']
             pose_items = []
@@ -46,8 +57,9 @@ def clean_dict_from_JSON(filepath: str):
 
             if not frame_num in formatted: # create empty dict for first instance of frame
                 formatted[frame_num] = {}
-            formatted[frame_num][model_id] = pose_items
-    return formatted
+            if not model_id in formatted[frame_num]:
+                formatted[frame_num][model_id] = pose_items
+    return formatted, max_fn
 
 def get_timestamp_from_frame(vidpath):
     cap = cv.VideoCapture(vidpath)
@@ -68,7 +80,6 @@ def get_timestamp_from_frame(vidpath):
             frame_no += 1
         else:
             break
-    frame_no += 1
 
     cap.release()
 
@@ -78,14 +89,20 @@ def get_conversion_factor(vidpath, max_json_frame):
     return max_vid_frame / max_json_frame
 
 def get_data_for_frame(data, fnum, model_id):
-    poses = data[fnum][model_id]
+    all_fnums = list(data.keys())
+    closest_fnum = min(all_fnums, key=lambda x: abs(x - fnum))
+    print(f'[LOGGING: get_data_for_frame] requested: {fnum} closest: {closest_fnum}')
+    if model_id not in data[closest_fnum]:
+        return None
+    poses = data[closest_fnum][model_id]
     return poses[0].kps
     
 def get_data_for_adj_frame(data, fnum, model_id, cf):
-    fnum_adj = fnum * cf
+    fnum_adj = fnum / cf
+    # print(f'[LOGGING: get_data_for_adj_frame] original: {fnum} adjusted: {fnum_adj}')
     return get_data_for_frame(data, fnum_adj, model_id)
 
-def get_frame_from_video(vidpath, fnum):
+def get_frame_from_fnum(vidpath, fnum):
     cap = cv.VideoCapture(vidpath)
     cap.set(cv.CAP_PROP_POS_FRAMES, fnum-1)
     _, frame = cap.read()
@@ -93,29 +110,34 @@ def get_frame_from_video(vidpath, fnum):
 
 def draw_pose_on_frame(frame, kps):
     for kp in kps:
-        cv.circle(frame, (kp.x, kp.y), 1, 'red', -1)
+        # print(f'[LOGGING: draw_pose_on_frame] xpos: {kp.x} ypos: {kp.y}')
+        cv.circle(frame, (int(kp.x), int(kp.y)), 1, (0, 0, 255), -1)
     return frame
 
 if __name__ == '__main__': 
-    vid_path = ''
-    json_path = ''
+    vid_path = 'python-analysis/data/raw/video.mp4'
+    json_path = 'python-analysis/data/raw/data.json'
 
     if not vid_path.endswith('.mp4'):
-        new_path = Path(vid_path).stem + '.mp4'
+        new_path = Path(vid_path).with_suffix('.mp4')
         convert_webm_to_mp4(vid_path, new_path)
         vid_path = new_path
     
     data, max_jf = clean_dict_from_JSON(json_path)
     frame_cf = get_conversion_factor(vid_path, max_json_frame=max_jf)
 
-    
+    fn = 55
+    model = 'movenet'
+    kps = get_data_for_adj_frame(data, fnum = fn, model_id=model, cf=frame_cf)
 
-# convert_webm_to_mp4('python-analysis/data/raw/video.webm', 'python-analysis/data/raw/output.mp4')
-# data = clean_dict_from_JSON('python-analysis/data/raw/data.json')
-# print(data.keys())
-# get_timestamp_from_frame('python-analysis/data/raw/output.mp4')
+    if kps is None:
+        print("no points found")
+    else:
+        frame = get_frame_from_fnum(vid_path, fn)
+        augmntd = draw_pose_on_frame(frame, kps)
 
-# TODO: apply scaling to frames IN THE json read function
-# TODO: auto determine whether conversion needs to occur by checking the extension
-# TODO: validate predictions
-# TODO: if this doesn't work try converting from seconds to frames using fps, maybe?
+        cv.imshow('with points', augmntd)
+        cv.waitKey(0)
+
+# TODO: validate predictions (if this doesn't work try converting from seconds to frames using fps, maybe)
+# TODO: add connections between points
