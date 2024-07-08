@@ -1,6 +1,7 @@
 import tensorflow as tf
 from typing import List
 import cv2 as cv
+from math import sqrt
 
 NUM_COCO_KPS = 17
 POSENET_SHAPE = 257
@@ -83,12 +84,10 @@ KP_DICT_33 = {
     "right_foot_index": 32
 }
 
-SKELETON_33_KPS = [
-    [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10), (11, 12), (11, 13),
+SKELETON_33_KPS = [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10), (11, 12), (11, 13),
     (13, 15), (15, 17), (15, 19), (15, 21), (17, 19), (12, 14), (14, 16), (16, 18), (16, 20), 
     (16, 22), (18, 20), (11, 23), (12, 24), (23, 24), (23, 25), (24, 26), (25, 27), (26, 28), 
     (27, 29), (28, 30), (29, 31), (30, 32), (27, 31), (28, 32)]
-]
 
 class KP2D:
     def __init__(self, x, y, score, name):
@@ -106,7 +105,7 @@ class KP3D:
         self.name = name
 
 class Pose:
-    def __init__(self, score: float, kps: List[KP2D]):
+    def __init__(self, score: float, kps: dict[str, KP2D]):
         self.score = score
         self.kps = kps
     
@@ -114,8 +113,19 @@ class Pose:
         for kp in self.kps:
             cv.circle(frame, (int(kp.x), int(kp.y)), 5, (0, 255, 0), -1)
         return frame
+    
+    def get_dist_btw(self, kp1_name, kp2_name):
+        kp1 = self.kps[kp1_name]
+        kp2 = self.kps[kp2_name]
+        return sqrt((kp1.x - kp2.x)^2 + (kp1.y - kp2.y)^2)
+    
+    def get_key_dists(self, cxns: List[(str, str)]):
+        dists = []
+        for c in cxns:
+            dists.append(self.get_dist_btw(c[0], c[1]))
+        return dists
 
 class Pose3D(Pose):
-    def __init__(self, score: float, kps: List[KP2D], kps3d: List[KP3D]):
+    def __init__(self, score: float, kps: dict[str, KP2D], kps3d: dict[str, KP3D]):
         self.kps3d = kps3d
         super().__init__(score, kps) 

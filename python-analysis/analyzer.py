@@ -107,6 +107,10 @@ def get_data_for_frame(data, fnum, model_id):
     if model_id not in data[closest_fnum]:
         return None
     poses = data[closest_fnum][model_id]
+
+    if abs(closest_fnum - fnum) > 10:
+        print(f'[FLAG] diff between requested and returned frames is unexpectedly large. requested: {fnum} returned: {closest_fnum}')
+
     return poses[0].kps
 
 def get_data_for_adj_frame(data, fnum, model_id, cf):
@@ -140,8 +144,8 @@ def draw_pose_on_frame(frame, kps, kp_mapping=None, skeleton_list=None):
     return frame
 
 if __name__ == '__main__': 
-    vid_path = 'python-analysis/data/raw/recorded_video_0701.mp4'
-    json_path = 'python-analysis/data/raw/inference_data_0701.json'
+    vid_path = 'python-analysis/data/raw/recorded_video_0703.mp4'
+    json_path = 'python-analysis/data/raw/inference_data_0703.json'
 
     if not vid_path.endswith('.mp4'):
         new_path = Path(vid_path).with_suffix('.mp4')
@@ -150,10 +154,10 @@ if __name__ == '__main__':
     
     data, max_jf = clean_dict_from_JSON(json_path)
     frame_cf = get_conversion_factor(vid_path, max_json_frame=max_jf)
-    fn = 1
-    model = 'movenet'
-    kp_mapping = defs.KP_DICT_17
-    skeleton = defs.SKELETON_17_KPS
+    fn = 500
+    model = 'blazepose'
+    kp_mapping = defs.KP_DICT_33
+    skeleton = defs.SKELETON_33_KPS
 
     kps = get_data_for_adj_frame(data, fnum = fn, model_id=model, cf=frame_cf)
 
@@ -166,4 +170,18 @@ if __name__ == '__main__':
         cv.imshow('with points', augmntd)
         cv.waitKey(0)
 
-# TODO: validate predictions (if this doesn't work try converting from seconds to frames using fps, maybe)
+# TODO: compute relevant metrics for each pose
+# TODO: kps should probably be a dictionary to be honest
+# TODO: video is still slightly out of sync, it seems. likely worth tracking down. need to ensure that videos are actually at 60fps
+
+# might want to figure out how much actual memory is needed to perform algorithms for error/flagging
+    # might not need the whole history. figure out how much is actually necessary
+    # take videos for multiple labels (too far, too close, multiple people)-- * separately *
+    # too far : ~15 feet
+    # too close: full body not captured
+# want to look at covariance table
+# all-point euclidean distance and angles
+# excel has a covariance feature-- "sensitivity report"
+# top 10 measure: time series, angles, points, etc. at a 2D level
+# support vector machines maybe?
+# probably a voting system between some different measurements
