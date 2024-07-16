@@ -1,5 +1,6 @@
 import './App.css'
-import WebcamDisplay from './components/WebcamDisplay'
+// import WebcamDisplay from './components/WebcamDisplay'
+import VideoUpload from './components/VideoUpload'
 import ModelSelectCheck from './components/ModelSelectCheck';
 import { Box, Flex, Heading } from "@chakra-ui/react";
 import { useState } from 'react';
@@ -23,7 +24,7 @@ function App() {
         <Heading mb="0">pose sandbox</Heading>
         <Flex direction="row" align="center" justify="space-between" w="100%" p="4">
                 <Box flex="1" minW="0" w="70%" overflow='auto'>
-                    <WebcamDisplay models={selectedModels}/>
+                    <VideoUpload models={selectedModels}/>
                 </Box>
                 <Box flex="none" minW="200px" borderRadius="lg" p="10px"  m="2" borderWidth="3px" height='95vh'>
                     <ModelSelectCheck onModelChange={handleModelChange}/>
