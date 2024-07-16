@@ -32,13 +32,11 @@ function WebcamDisplay({ models }: Props) {
         document.body.removeChild(a);
     }, []);
 
-    const downloadInferenceData = () => {
+    const downloadInferenceData = useCallback(() => {
         const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
         const dataUrl = URL.createObjectURL(dataBlob);
-        const curTime = new Date().getTime();
-        const fileName = 'inference_data' + curTime + '.json';
-        downloadFile(dataUrl, fileName);
-    };
+        downloadFile(dataUrl, "inference_data.json");
+    }, [inferenceData, downloadFile]);
 
     const estimatePose = useCallback(async () => {
         if (videoRef.current?.readyState === 4) {
