@@ -30,12 +30,19 @@ function WebcamDisplay({ models }: Props) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        console.log('object downloaded')
     }, []);
 
     const downloadInferenceData = useCallback(() => {
-        const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
-        const dataUrl = URL.createObjectURL(dataBlob);
-        downloadFile(dataUrl, "inference_data.json");
+        console.log('entered download function')
+        if(inferenceData.length > 0) {
+            console.log('length confirmed > 0')
+            const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
+            const dataUrl = URL.createObjectURL(dataBlob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `inference_data_${timestamp}.json`;
+            downloadFile(dataUrl, filename);
+        }
     }, [inferenceData, downloadFile]);
 
     const estimatePose = useCallback(async () => {
@@ -80,6 +87,7 @@ function WebcamDisplay({ models }: Props) {
             requestAnimationFrame(estimatePose);
         }
         else {
+            console.log('video ended!')
             downloadInferenceData();
         }
     }, [models, downloadInferenceData]);
@@ -139,7 +147,7 @@ function WebcamDisplay({ models }: Props) {
     return (
         <div style={{ position: 'relative' }}>
             <Input type="file" accept="video/*" onChange={handleFileUpload} />
-            <div style={{ position: 'relative', width: '1280px', height: '720px' }} className="mirrored-container">
+            <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
                 <video
                     ref={videoRef}
                     style={{
