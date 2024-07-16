@@ -1,7 +1,7 @@
 import tensorflow as tf
-from typing import List
+from typing import List, Tuple
 import cv2 as cv
-from math import sqrt
+from math import sqrt, atan2, degrees
 
 NUM_COCO_KPS = 17
 POSENET_SHAPE = 257
@@ -119,11 +119,19 @@ class Pose:
         kp2 = self.kps[kp2_name]
         return sqrt((kp1.x - kp2.x)^2 + (kp1.y - kp2.y)^2)
     
-    def get_key_dists(self, cxns: List[(str, str)]):
+    def get_key_dists(self, cxns: List[Tuple[str, str]]):
         dists = []
         for c in cxns:
             dists.append(self.get_dist_btw(c[0], c[1]))
         return dists
+    
+    def get_angle_between(self, kp1_name: str, kp2_name: str) -> float:
+        kp1 = self.kps[kp1_name]
+        kp2 = self.kps[kp2_name]
+        delta_x = kp2.x - kp1.x
+        delta_y = kp2.y - kp1.y
+        angle = atan2(delta_y, delta_x)
+        return degrees(angle)
 
 class Pose3D(Pose):
     def __init__(self, score: float, kps: dict[str, KP2D], kps3d: dict[str, KP3D]):
