@@ -54,7 +54,7 @@ def clean_dict_from_JSON(filepath: str):
     #     json.dump(parsed, f, indent=4)
     return formatted, max_ts
 
-def get_data_for_frame(data, timestamp, model_id):
+def get_data_at_time(data, timestamp, model_id):
     all_ts = list(data.keys())
     closest_timestamp = min(all_ts, key=lambda x: abs(x - timestamp))
     print(f'[LOGGING]: get_data_for_frame] requested: {timestamp} closest: {closest_timestamp}')
@@ -93,8 +93,8 @@ if __name__ == '__main__':
         vidutils.convert_webm_to_mp4(vid_path, new_path)
         vid_path = new_path
     
-    data, max_jf, max_jts = clean_dict_from_JSON(json_path)
-    vid_dur = vidutils.get_length(vid_path)
+    data, max_jts = clean_dict_from_JSON(json_path)
+    vid_dur = vidutils.get_duration(vid_path)
     print(f"[LOGGING] json recorded duration: {max_jts} | video_duration: {vid_dur}")
 
 

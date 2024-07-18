@@ -43,32 +43,59 @@ def get_angle(seg1: Tuple[defs.KP2D, defs.KP2D], seg2: Tuple[defs.KP2D, defs.KP2
     return np.arccos(np.clip(np.dot(vec1, vec2), -1.0, 1.0))
 
 def get_all_lengths(kps):
+    if not kps:
+        return [-1] * len(LENGTH_CHECKS)
     lengths = []
     for seg in LENGTH_CHECKS:
         key1, key2 = seg
-        p1 = kps[key1]
-        p2 = kps[key2]
-        lengths.append(get_length(p1, p2))
+        if key1 not in kps or key2 not in kps:
+            lengths.append(-1)
+        else:
+            p1 = kps[key1]
+            p2 = kps[key2]
+            lengths.append(get_length(p1, p2))
     return lengths
 
 def get_all_angles(kps):
+    if not kps:
+        return [-1] * len(ANGLE_CHECKS)
     angles = []
     for triad in ANGLE_CHECKS:
         key1, key2, key3 = triad
-        beg = kps[key1]
-        mid = kps[key2]
-        end = kps[key3]
-        angles.append(get_angle((beg, mid), (mid, end)))
+        if key1 not in kps or key2 not in kps or key3 not in kps:
+            angles.append(-1)
+        else:
+            beg = kps[key1]
+            mid = kps[key2]
+            end = kps[key3]
+            angles.append(get_angle((beg, mid), (mid, end)))
     return angles
 
-def check_presence(kps, conf_thresh=0.6):
+def check_presences(kps, conf_thresh=0.6):
+    if not kps:
+        return [-1] * len(PRESENCE_CHECKS)
     presences = []
     for key in PRESENCE_CHECKS:
+        if key not in kps:
+            presences.append(0)
+            continue
         if(kps[key].prob > conf_thresh):
             presences.append(1)
         presences.append(0)
     return presences
 
 if __name__ == '__main__': 
-    pass
+    json_path = '/Users/janyabudaraju/Desktop/curveassure/pose-sandbox/python-analysis/data/raw/inference_data_2024-07-16T17-35-11-669Z.json'
+    data, _ = parser.clean_dict_from_JSON(json_path)
+    pose = parser.get_data_at_time(data, timestamp=4.5, model_id='movenet')
+    angles = get_all_angles(pose)
+    print("ANGLES")
+    print(angles)
+    print("LENGTHS")
+    lengths = get_all_lengths(pose)
+    print(lengths)
+    print("VISIBILITY")
+    presences = check_presences(pose)
+    print(presences)
+
 
