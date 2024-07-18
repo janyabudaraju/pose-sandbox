@@ -91,18 +91,14 @@ SKELETON_33_KPS = [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8
 
 class KP2D:
     def __init__(self, x, y, score, name):
-        self.x = x
-        self.y = y
+        self.coords = [x, y]
         self.prob = score
         self.name = name
 
-class KP3D:
+class KP3D(KP2D):
     def __init__(self, x, y, z, score, name):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.prob = score
-        self.name = name
+        super().__init__(x, y, score, name)
+        self.coords.append(z)
 
 class Pose:
     def __init__(self, score: float, kps: dict[str, KP2D]):
