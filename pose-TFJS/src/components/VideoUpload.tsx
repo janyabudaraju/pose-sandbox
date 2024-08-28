@@ -35,6 +35,8 @@ function WebcamDisplay({ models }: Props) {
 
     const downloadInferenceData = useCallback(() => {
         console.log('entered download function')
+        console.log(inferenceData.length)
+        console.log(inferenceData)
         if(inferenceData.length > 0) {
             console.log('length confirmed > 0')
             const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
@@ -78,6 +80,7 @@ function WebcamDisplay({ models }: Props) {
                     });
                 }
                 setInferenceData(prevData => [...prevData, modelInferences]);
+                console.log(modelInferences)
             }
         }
         frameCountFps.current++;
@@ -88,6 +91,8 @@ function WebcamDisplay({ models }: Props) {
         }
         else {
             console.log('video ended!')
+            console.log('max timestamp recorded:', videoRef.current?.currentTime);
+            console.log('video duration:', videoRef.current?.duration);
             downloadInferenceData();
         }
     }, [models, downloadInferenceData]);
