@@ -20,6 +20,16 @@ ANGLE_CHECKS = [('left_hip', 'left_shoulder', 'right_shoulder'),
 PRESENCE_CHECKS = ['left_eye', 'right_eye', 'nose', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle']
 
 def get_length(p1: defs.KP2D, p2: defs.KP2D):
+    """
+    function to calculate the Euclidean distance between two 2D keypoints.
+
+    params:
+        p1 (defs.KP2D): first keypoint, with coordinates stored in `coords`.
+        p2 (defs.KP2D): second keypoint, with coordinates stored in `coords`.
+
+    returns:
+        float: Euclidean distance between the two keypoints.
+    """
     assert len(p1.coords) == len(p2.coords)
     dist_sum = 0
     for i in range(len(p1.coords)):
@@ -27,6 +37,17 @@ def get_length(p1: defs.KP2D, p2: defs.KP2D):
     return dist_sum**.5
 
 def get_angle(seg1: Tuple[defs.KP2D, defs.KP2D], seg2: Tuple[defs.KP2D, defs.KP2D]):
+    """
+    calculate angle between two segments, defined by pairs of 2D keypoints.
+
+    Args:
+        seg1 (Tuple[defs.KP2D, defs.KP2D]): first segment, defined by two keypoints.
+        seg2 (Tuple[defs.KP2D, defs.KP2D]): second segment, defined by two keypoints.
+
+    Returns:
+        Optional[float]: angle between the two segments in radians. `None` if either segment has 0 length.
+    """
+
     assert len(seg1[0].coords) == len(seg1[1].coords)
     assert len(seg1[0].coords) == len(seg2[0].coords)
     assert len(seg2[0].coords) == len(seg2[1].coords)
@@ -43,6 +64,17 @@ def get_angle(seg1: Tuple[defs.KP2D, defs.KP2D], seg2: Tuple[defs.KP2D, defs.KP2
     return np.arccos(np.clip(np.dot(vec1, vec2), -1.0, 1.0))
 
 def get_all_lengths(kps):
+    """
+    calculates the lengths of predefined segments (defined in LENGTH_CHECKS) between keypoints.
+
+    params:
+        kps (Dict[str, defs.KP2D]): dict of keypoints, with labels as keys.
+
+    returns:
+        List[float]: list of lengths for each segment defined in `LENGTH_CHECKS`.
+                    if keypoint is missing, corresponding length for segment is set to -1.
+    """
+
     if not kps:
         return [-1] * len(LENGTH_CHECKS)
     lengths = []
@@ -57,6 +89,16 @@ def get_all_lengths(kps):
     return lengths
 
 def get_all_angles(kps):
+    """
+    calculates the angles between predefined keypoint triplets (defined in ANGLE_CHECKS).
+
+    params:
+        kps (Dict[str, defs.KP2D]): dict of keypoints, with labels as keys.
+
+    returns:
+        List[float]: list of angles for each triplet defined in `ANGLE_CHECKS`.
+                    if keypoint is missing, corresponding angle for triplet is set to -1.
+    """
     if not kps:
         return [-1] * len(ANGLE_CHECKS)
     angles = []
@@ -72,6 +114,17 @@ def get_all_angles(kps):
     return angles
 
 def check_presences(kps, conf_thresh=0.6):
+    """
+    check 'presence' of keypoints based on their confidence scores.
+
+    Args:
+        kps (Dict[str, defs.KP2D]): A dictionary of keypoints with their labels as keys.
+        conf_thresh (float, optional): The confidence threshold for considering a keypoint as present. Defaults to 0.6.
+
+    Returns:
+        List[int]: 1 for present keypoint, 0 for absent keypoint. order defined in `PRESENCE_CHECKS`.
+                if a keypoint is missing or its confidence is below the threshold, presence set to 0.
+    """
     if not kps:
         return [-1] * len(PRESENCE_CHECKS)
     presences = []
