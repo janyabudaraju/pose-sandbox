@@ -84,52 +84,170 @@ KP_DICT_33 = {
     "right_foot_index": 32
 }
 
-SKELETON_33_KPS = [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10), (11, 12), (11, 13),
-    (13, 15), (15, 17), (15, 19), (15, 21), (17, 19), (12, 14), (14, 16), (16, 18), (16, 20), 
-    (16, 22), (18, 20), (11, 23), (12, 24), (23, 24), (23, 25), (24, 26), (25, 27), (26, 28), 
-    (27, 29), (28, 30), (29, 31), (30, 32), (27, 31), (28, 32)]
+SKELETON_33_KPS = [
+    (0, 1),     # nose to left eye inner
+    (1, 2),     # left eye inner to left eye
+    (2, 3),     # left eye to left eye outer
+    (3, 7),     # left eye outer to left ear
+    (0, 4),     # nose to right eye inner
+    (4, 5),     # right eye inner to right eye
+    (5, 6),     # right eye to right eye outer
+    (6, 8),     # right eye outer to right ear
+    (9, 10),    # left shoulder to right shoulder
+    (11, 12),   # left hip to right hip
+    (11, 13),   # left hip to left knee
+    (13, 15),   # left knee to left ankle
+    (15, 17),   # left ankle to left heel
+    (15, 19),   # left ankle to left foot index
+    (15, 21),   # left ankle to left foot small toe
+    (17, 19),   # left heel to left foot index
+    (12, 14),   # right hip to right knee
+    (14, 16),   # right knee to right ankle
+    (16, 18),   # right ankle to right heel
+    (16, 20),   # right ankle to right foot index
+    (16, 22),   # right ankle to right foot small toe
+    (18, 20),   # right heel to right foot index
+    (11, 23),   # left hip to left shoulder
+    (12, 24),   # right hip to right shoulder
+    (23, 24),   # left shoulder to right shoulder
+    (23, 25),   # left shoulder to left elbow
+    (24, 26),   # right shoulder to right elbow
+    (25, 27),   # left elbow to left wrist
+    (26, 28),   # right elbow to right wrist
+    (27, 29),   # left wrist to left hand index
+    (28, 30),   # right wrist to right hand index
+    (29, 31),   # left hand index to left hand pinky
+    (30, 32),   # right hand index to right hand pinky
+    (27, 31),   # left wrist to left hand pinky
+    (28, 32)    # right wrist to right hand pinky
+]
 
 class KP2D:
+    """
+    2D keypoint object representation for a pose model keypoint prediction.
+
+    attributes:
+        coords (list[float]): the (x, y) coordinates of the keypoint.
+        prob (float): confidence score of the keypoint.
+        name (str): name of the keypoint.
+    """
+
     def __init__(self, x, y, score, name):
         self.coords = [x, y]
         self.prob = score
         self.name = name
 
 class KP3D(KP2D):
+    """
+    3D keypoint object representation for a pose model keypoint prediction.
+    extends KP2D to avoid attribute replication.
+
+    attributes:
+        coords (list[float]): the (x, y, z) coordinates of the keypoint.
+    """
     def __init__(self, x, y, z, score, name):
         super().__init__(x, y, score, name)
         self.coords.append(z)
 
 class Pose:
+    """
+    class representing a 2D prediction derived from a pose model.
+
+    attributes:
+        score (float): overall confidence score of the pose.
+        kps (dict[str, KP2D]): dictionary of keypoint names to KP2D objects.
+    """
+
     def __init__(self, score: float, kps: dict[str, KP2D]):
         self.score = score
         self.kps = kps
     
     def draw_on_frame(self, frame):
+        """
+        function to draw keypoints on a given video frame. draws only in 2 dimensions.
+
+        params:
+            frame: the video frame on which to draw the keypoints.
+
+        returns:
+            frame: the frame with keypoints drawn on it.
+        """
         for kp in self.kps:
-            cv.circle(frame, (int(kp.x), int(kp.y)), 5, (0, 255, 0), -1)
+            cv.circle(frame, (int(kp.coords[0]), int(kp.coords[1])), 5, (0, 255, 0), -1)
         return frame
     
     def get_dist_btw(self, kp1_name, kp2_name):
+        """
+        function to calculate the euclidean distance between two KP objects.
+        Both must be either KP2D or KP3D (same number of coordinate indices)
+
+        params:
+            kp1_name (str): name of the first keypoint.
+            kp2_name (str): name of the second keypoint.
+
+        returns:
+            float: the euclidean distance between the two keypoints.
+        """
+
         kp1 = self.kps[kp1_name]
         kp2 = self.kps[kp2_name]
-        return sqrt((kp1.x - kp2.x)^2 + (kp1.y - kp2.y)^2)
+
+        assert len(kp1.coords) == len(kp2.coords), "KPs must have the same dimension"
+        sum = 0
+        for i in range(len(kp1.coords)):
+            sum += (kp1.coords[i] - kp2.coords[i])**2
+        return sqrt(sum)
     
     def get_key_dists(self, cxns: List[Tuple[str, str]]):
+        """
+        function to calculate the euclidean distances between pairs of keypoints.
+
+        params:
+            cxns (List[tuple[str, str]]): list of tuples, each containing the names of two keypoints.
+
+        returns:
+            List[float]: list of euclidean distances between each pair of keypoints.
+        """
+
         dists = []
         for c in cxns:
             dists.append(self.get_dist_btw(c[0], c[1]))
         return dists
     
     def get_angle_between(self, kp1_name: str, kp2_name: str) -> float:
+        """
+        calculate the angle between two keypoints with respect to the horizontal axis.
+        note that for 3D keypoints, only the first two coordinate indices are used to determine
+        the angle with the horizontal axis.
+
+        params:
+            kp1_name (str): name of the first keypoint.
+            kp2_name (str): name of the second keypoint.
+
+        returns:
+            float: angle in degrees between the line connecting the keypoints and the horizontal axis.
+        """
+
         kp1 = self.kps[kp1_name]
         kp2 = self.kps[kp2_name]
-        delta_x = kp2.x - kp1.x
-        delta_y = kp2.y - kp1.y
+        
+        delta_x = kp2.coords[0] - kp1.coords[0]
+        delta_y = kp2.coords[1] - kp1.coords[1]
+
         angle = atan2(delta_y, delta_x)
         return degrees(angle)
 
 class Pose3D(Pose):
+    """
+    class representing a 3D prediction derived from a pose model.
+    inherits from Pose2D to avoid attribute duplication.
+
+    attributes:
+        score (float): overall confidence score of the pose.
+        kps (dict[str, KP2D]): dictionary of keypoint names to KP2D objects.
+        kps3d (dict[str, KP3D]): dictionary of keypoint names to KP3D objects.
+    """
+
     def __init__(self, score: float, kps: dict[str, KP2D], kps3d: dict[str, KP3D]):
         self.kps3d = kps3d
         super().__init__(score, kps) 

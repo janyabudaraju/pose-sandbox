@@ -40,11 +40,11 @@ def get_angle(seg1: Tuple[defs.KP2D, defs.KP2D], seg2: Tuple[defs.KP2D, defs.KP2
     """
     calculate angle between two segments, defined by pairs of 2D keypoints.
 
-    Args:
+    params:
         seg1 (Tuple[defs.KP2D, defs.KP2D]): first segment, defined by two keypoints.
         seg2 (Tuple[defs.KP2D, defs.KP2D]): second segment, defined by two keypoints.
 
-    Returns:
+    returns:
         Optional[float]: angle between the two segments in radians. `None` if either segment has 0 length.
     """
 
@@ -138,16 +138,14 @@ def check_presences(kps, conf_thresh=0.6):
     return presences
 
 if __name__ == '__main__': 
-    json_path = '/Users/janyabudaraju/Desktop/curveassure/pose-sandbox/python-analysis/data/raw/inference_data_2024-07-16T17-35-11-669Z.json'
+    # TODO: add path here
+    json_path = ''
     data, _ = parser.clean_dict_from_JSON(json_path)
     pose = parser.get_data_at_time(data, timestamp=4.5, model_id='movenet')
     angles = get_all_angles(pose)
-    print("ANGLES")
     print(angles)
-    print("LENGTHS")
     lengths = get_all_lengths(pose)
     print(lengths)
-    print("VISIBILITY")
     presences = check_presences(pose)
     print(presences)
 
