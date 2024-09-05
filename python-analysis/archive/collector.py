@@ -25,8 +25,6 @@ def load_blazepose(model_path = 'python-analysis/models/blazepose.task'):
     return model
 
 def run_inference_tflite(interpreter, img, dtype, shape=257):
-    # TODO: check how to perform this resize without distortion. this will not yield accurate kp
-    # positions, probably.
     input_image = cv.resize(img, (shape, shape))
     input_image = tf.cast(input_image, dtype=dtype)
     input_image = tf.expand_dims(input_image, axis=0)
@@ -35,7 +33,6 @@ def run_inference_tflite(interpreter, img, dtype, shape=257):
     interpreter.set_tensor(input_details[0]['index'], input_image.numpy())
     interpreter.invoke()
     kps = interpreter.get_tensor(output_details[0]['index'])
-    # TODO: convert to standard form
     return kps
 
 def process_posenet(map, threshold=0.5):
@@ -48,14 +45,6 @@ def process_posenet(map, threshold=0.5):
             keypoints.append(kp)
     return keypoints
 
-def process_video(inference_function, model, vid_path, write_path = 'python-analysis/data/processed'):
-    cap = cv.VideoCapture(vid_path)
-
-    while (cap.isOpened()):
-        _, frame = cap.read()
-        inf = inference_function(model, frame)
-        # TODO: dump inference to;..... somewhere
-    # TODO: write to write path in some form. probably json
 
 def movenet(interpreter, img):
     output = run_inference_tflite(interpreter, img, dtype = defs.MOVENET_DTYPE, shape=defs.MOVENET_SHAPE)
@@ -66,19 +55,10 @@ def posenet(interpreter, img):
     return output
 
 def blazepose(model, img):
-    # TODO: check that this doesn't cause distortion.
     mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=img)
     output = model.detect(mp_img)
-    # print(output.pose_landmarks)
-    # TODO: convert to standard form
     return output.pose_landmarks
 
-def to_KP3D(output):
-    
-    pass
-
-def to_KP2D(output):
-    pass
 
 model = load_blazepose()
 im = cv.imread('python-analysis/data/raw/test.jpg', cv.IMREAD_COLOR)

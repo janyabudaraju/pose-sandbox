@@ -9,8 +9,6 @@ def convert_webm_to_mp4(webm_path, mp4_path):
         webm_path (str): path to the input webm file.
         mp4_path (str): path where the output mp4 file will be saved.
 
-    returns:
-        None: this function does not return a value.
     """
 
     command = [
@@ -32,7 +30,7 @@ def get_frame_from_fnum(vidpath, fnum):
         fnum (int): the frame number to retrieve (1-based index).
 
     returns:
-        any: the frame corresponding to the specified frame number.
+        frame: the frame corresponding to the specified frame number.
     """
 
     cap = cv.VideoCapture(vidpath)
