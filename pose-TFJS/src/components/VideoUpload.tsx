@@ -8,50 +8,38 @@ type Props = {
     models: PoseModel<BasePose>[];
 }
 
-function WebcamDisplay({ models }: Props) {
+function VideoUpload({ models }: Props) {
+
+    // state to track model changes from selections
     const [isModelChanged, setIsModelChanged] = useState(true);
+    // references to track current models to run
     const curModelRefs = useRef<PoseModel<BasePose>[]>([]);
+    // state to store inference data for the current video
     const [inferenceData, setInferenceData] = useState<Inference[][]>([]);
 
+    // refs for the video play component and canvas
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    // ref and state for fps calculation
     const [fps, setFps] = useState(0);
     const frameCountFps = useRef(0);
     const frameCountIdx = useRef(0);
     const prevTime = useRef(Date.now());
 
-    const downloadFile = useCallback((url: string, filename: string) => {
-        const a = document.createElement("a");
-        a.style.display = "none";
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        console.log('object downloaded')
-    }, []);
-
-    const downloadInferenceData = useCallback(() => {
-        console.log('entered download function')
-        console.log(inferenceData.length)
-        console.log(inferenceData)
-        if(inferenceData.length > 0) {
-            console.log('length confirmed > 0')
-            const dataBlob = new Blob([JSON.stringify(inferenceData)], { type: 'application/json' });
-            const dataUrl = URL.createObjectURL(dataBlob);
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `inference_data_${timestamp}.json`;
-            downloadFile(dataUrl, filename);
-        }
-    }, [inferenceData, downloadFile]);
-
+    /**
+     * core function responsible for running inference on
+     * each video frame & drawing keypoints onto canvas.
+     * handles:
+     * - running the selected pose detection models for the current frame
+     * - drawing keypoints on the canvas
+     * - storing the inference results
+     */
     const estimatePose = useCallback(async () => {
         if (videoRef.current?.readyState === 4) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
-
+            // update the video and canvas dimensions to match video width and height
             if (video.videoWidth !== video.width || video.videoHeight !== video.height) {
                 video.width = video.videoWidth;
                 video.height = video.videoHeight;
@@ -61,12 +49,14 @@ function WebcamDisplay({ models }: Props) {
                     canvas.width = video.width;
                     canvas.height = video.height;
                 }
-        
+                
+                // run pose detection models on the current frame
                 const modelInferences = await Promise.all(models.map(async (model) => {
                     const poseData = await model.runInference(video);
                     return { timeStamp: video.currentTime, frameIdx: frameCountIdx.current, modelId: model.id, poseData };
                 }));
 
+                // draw keypoints on the canvas
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
                     ctx.clearRect(0, 0, video.width, video.height);
@@ -79,24 +69,39 @@ function WebcamDisplay({ models }: Props) {
                         }
                     });
                 }
-                setInferenceData(prevData => [...prevData, modelInferences]);
-                console.log(modelInferences)
+                // update the inference data state to append the new frame of data
+                setInferenceData(prevData => {
+                    const updatedData = [...prevData, modelInferences];
+                    return updatedData;
+                });
             }
         }
+        // increment frame counters to update fps
         frameCountFps.current++;
         frameCountIdx.current++;
 
+        // check if video still has time on the clock (still playing)
         if (videoRef.current?.currentTime && videoRef.current?.currentTime < videoRef.current?.duration) {
             requestAnimationFrame(estimatePose);
         }
+        // move to printing all collected data once video is complete
         else {
-            console.log('video ended!')
-            console.log('max timestamp recorded:', videoRef.current?.currentTime);
-            console.log('video duration:', videoRef.current?.duration);
-            downloadInferenceData();
+            if (inferenceData.length > 0) {
+                try{
+                    // print data to console as json
+                    const jsonData = JSON.stringify(inferenceData, null, 2);
+                    console.log('stringified Data:', jsonData);
+                }
+                catch (error) {
+                    console.error('Failed to serialize inference data:', error);
+                }
+            } else {
+                console.log('no inference data to log.');
+            }
         }
-    }, [models, downloadInferenceData]);
+    }, [models, inferenceData]);
 
+    // load all models and begin animation loop.
     const runModel = useCallback(async () => {
         curModelRefs.current.forEach(model => model.dispose());
         curModelRefs.current = [];
@@ -112,10 +117,12 @@ function WebcamDisplay({ models }: Props) {
         }
     }, [models, estimatePose]);
 
+    // set the model changed flag when new models are passed
     useEffect(() => {
         setIsModelChanged(true);
     }, [models]);
 
+    // re-run model inference when models change
     useEffect(() => {
         if (isModelChanged) {
             setIsModelChanged(false);
@@ -123,6 +130,7 @@ function WebcamDisplay({ models }: Props) {
         }
     }, [isModelChanged, runModel]);
 
+    // fps calculation, running once per second
     useEffect(() => {
         const calculateFps = () => {
             const now = Date.now();
@@ -136,6 +144,7 @@ function WebcamDisplay({ models }: Props) {
         return () => clearInterval(interval);
     }, []);
 
+    // handle file upload by resetting inference data and loading reference
     const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -149,6 +158,7 @@ function WebcamDisplay({ models }: Props) {
         }
     }, []);
 
+    // render video and canvas, using chakra input type
     return (
         <div style={{ position: 'relative' }}>
             <Input type="file" accept="video/*" onChange={handleFileUpload} />
@@ -180,4 +190,4 @@ function WebcamDisplay({ models }: Props) {
     );
 }
 
-export default WebcamDisplay;
+export default VideoUpload;
