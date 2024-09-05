@@ -1,6 +1,12 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import { PoseDetector, Pose } from '@tensorflow-models/pose-detection';
 
+/**
+ * interface representing form of a single inference result, which includes
+ * the timestamp, frame index, model ID, and pose data.
+ * this is a convenience representation for logging purposes, not the raw
+ * model output, which is of type BasePose.
+ */
 export interface Inference {
     timeStamp: number;
     frameIdx: number;
@@ -8,24 +14,47 @@ export interface Inference {
     poseData: BasePose[];
 }
 
+/**
+ * interface representing expected form of a 2D keypoint.
+ */
 export interface KP2D {
     x: number | undefined;
     y: number | undefined;
     score: number | undefined;
     name: string | undefined;
 }
-export interface KP3D extends KP2D{
+
+/**
+ * interface representing expected form of a 2D keypoint.
+ * inherits from KP2D to avoid duplicate fields.
+ */
+export interface KP3D extends KP2D {
     z: number | undefined;
 }
 
+/**
+ * interface representing a single pose estimate inference.
+ * expected raw output of a pose estimation model.
+ */
 export interface BasePose {
     score: number | undefined;
     keypoints: KP2D[];
 }
+
+/**
+ * interface representing a single pose estimate inference with 3D keypoints (blazepose).
+ * expected raw output of a pose estimation model.
+ */
 export interface Pose3D extends BasePose {
     keypoints3D: KP3D[];
-    // optionally can add segmentation info
 }
+
+/**
+ * interface detailing expected implementation of pose detection models.
+ * methods for loading, running inference, and disposing of the model.
+ * allows for models to be stored and run in a single data structure, with the ability
+ * to select and unselect cleanly & add more models as desired.
+ */
 export interface PoseModel <T> {
     id: string;
     name: string;
@@ -35,6 +64,11 @@ export interface PoseModel <T> {
     dispose: () => void;
 }
 
+/**
+ * creates and implements all functionality for a PoseModel instance  
+ * for PoseNet.
+ * @returns PoseModel<BasePose> - PoseNet model instance
+ */
 export function poseNetModel(): PoseModel<BasePose> {
     let model: PoseDetector | null = null;
     const id = 'posenet';
@@ -72,6 +106,11 @@ export function poseNetModel(): PoseModel<BasePose> {
     return { id, name, color, load, runInference, dispose };
 }
 
+/**
+ * creates and implements all functionality for a PoseModel instance  
+ * for MoveNet.
+ * @returns PoseModel<BasePose> - MoveNet model instance
+ */
 export function moveNetModel(): PoseModel<BasePose> {
     let model: PoseDetector | null = null;
     const id = 'movenet';
@@ -108,6 +147,11 @@ export function moveNetModel(): PoseModel<BasePose> {
     return { id, name, color, load, runInference, dispose };
 }
 
+/**
+ * creates and implements all functionality for a PoseModel instance  
+ * for BlazePose.
+ * @returns PoseModel<BasePose> - BlazePose model instance
+ */
 export function blazeNetModel(): PoseModel<Pose3D> {
     let model: PoseDetector | null = null;
     const id = 'blazepose';
@@ -156,8 +200,12 @@ export function blazeNetModel(): PoseModel<Pose3D> {
     return { id, name, color, load, runInference, dispose };
 }
 
+/**
+ *  placeholder PoseModel that does not perform any actual inference.
+ * 
+ * @returns PoseModel<BasePose> - no-op model instance
+ */
 export function noModel(): PoseModel<BasePose> {
-    // const model: PoseDetector | null = null;
     const id = 'none';
     const name = 'None';
     const color = '';
